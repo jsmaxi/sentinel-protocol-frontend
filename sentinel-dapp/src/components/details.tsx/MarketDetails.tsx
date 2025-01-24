@@ -1,0 +1,344 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Shield, Calendar, Wallet } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+
+// Mock data - replace with actual data fetching
+const mockMarket = {
+  id: "1",
+  name: "Flight Delay Insurance",
+  description: "Insurance against flight delays",
+  underlyingAsset: "USDC",
+  assetIcon: "/usdc.png",
+  oracleName: "Acurast",
+  creatorAddress: "GBBD...",
+  status: "LIVE",
+  possibleReturn: 12.5,
+  totalAssets: 100000,
+  totalShares: 1000,
+  riskScore: "LOW",
+  yourShares: 10,
+  exercising: "AUTO",
+  eventTime: new Date(),
+  selectedSide: "HEDGE",
+  walletBalance: 1000,
+  hedgeVaultBalance: 5000,
+  riskVaultBalance: 7500,
+  commissionFee: 2.5,
+};
+
+type ActionType = "deposit" | "withdraw" | "mint" | "redeem" | null;
+
+export default function MarketDetails() {
+  const { id } = useParams();
+  const market = mockMarket; // Replace with actual data fetching
+  const [selectedAction, setSelectedAction] = useState<ActionType>(null);
+  const [amount, setAmount] = useState<string>("");
+  const [ownerAddress, setOwnerAddress] = useState<string>("");
+
+  const calculateReturn = () => {
+    const inputAmount = parseFloat(amount) || 0;
+    return (inputAmount * (1 + market.possibleReturn / 100)).toFixed(2);
+  };
+
+  const handlePercentageClick = (percentage: number) => {
+    const value = ((market.walletBalance * percentage) / 100).toString();
+    setAmount(value);
+  };
+
+  const handleConfirm = () => {
+    // Handle confirmation logic here
+    console.log(
+      "Confirming action:",
+      selectedAction,
+      "with amount:",
+      amount,
+      "owner:",
+      ownerAddress
+    );
+    setSelectedAction(null);
+    setAmount("");
+    setOwnerAddress("");
+  };
+
+  const renderActionContent = () => {
+    if (!selectedAction) return null;
+
+    const actionTitle =
+      selectedAction.charAt(0).toUpperCase() + selectedAction.slice(1);
+    const showOwnerAddress =
+      selectedAction === "withdraw" || selectedAction === "redeem";
+
+    return (
+      <div className="mt-6 p-4 border rounded-lg space-y-4">
+        <h3 className="text-lg font-semibold">{actionTitle}</h3>
+        <div className="space-y-4">
+          {showOwnerAddress && (
+            <div>
+              <label className="text-sm text-muted-foreground">
+                Owner Address
+              </label>
+              <Input
+                type="text"
+                placeholder="Enter owner address"
+                value={ownerAddress}
+                onChange={(e) => setOwnerAddress(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          )}
+          <div>
+            <label className="text-sm text-muted-foreground">
+              {selectedAction === "mint" || selectedAction === "redeem"
+                ? "Shares Amount"
+                : "Asset Amount"}
+            </label>
+            <div className="space-y-2">
+              <Input
+                type="number"
+                placeholder="Enter amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="mt-1"
+              />
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePercentageClick(25)}
+                >
+                  25%
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePercentageClick(50)}
+                >
+                  50%
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePercentageClick(75)}
+                >
+                  75%
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePercentageClick(100)}
+                >
+                  MAX
+                </Button>
+              </div>
+            </div>
+          </div>
+          {amount && (
+            <>
+              <div className="text-sm">
+                <span className="text-muted-foreground">Estimated return:</span>
+                <span className="ml-2">
+                  {calculateReturn()} {market.underlyingAsset}
+                </span>
+              </div>
+              <Button onClick={handleConfirm} className="w-full">
+                Confirm {actionTitle}
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen p-4 md:p-8 relative">
+      <div className="absolute inset-0 bg-grid animate-grid-flow opacity-10" />
+
+      <div className="max-w-7xl mx-auto space-y-8 relative">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/markets"
+            className="text-muted-foreground hover:text-primary"
+          >
+            ← Back to Markets
+          </Link>
+          <Button>Connect Wallet</Button>
+        </div>
+
+        <Card className="glass">
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-2xl">{market.name}</CardTitle>
+                <p className="text-muted-foreground mt-2">
+                  {market.description}
+                </p>
+              </div>
+              <Badge className="bg-green-500/20 text-green-500">
+                {market.status}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <span className="text-sm text-muted-foreground">
+                  Selected Side
+                </span>
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  <span className="text-lg font-semibold">
+                    {market.selectedSide}
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <span className="text-sm text-muted-foreground">
+                  Wallet Balance
+                </span>
+                <div className="flex items-center gap-2">
+                  <Wallet className="h-5 w-5" />
+                  <span className="text-lg font-semibold">
+                    {market.walletBalance} {market.underlyingAsset}
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <span className="text-sm text-muted-foreground">
+                  Vault Balances
+                </span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Hedge:</span>
+                    <span>
+                      {market.hedgeVaultBalance} {market.underlyingAsset}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Risk:</span>
+                    <span>
+                      {market.riskVaultBalance} {market.underlyingAsset}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <span className="text-sm text-muted-foreground">
+                  Event Time
+                </span>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  <span className="text-lg font-semibold">
+                    {format(market.eventTime, "PPp")}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Button
+                size="lg"
+                className="w-full"
+                variant={selectedAction === "deposit" ? "secondary" : "default"}
+                onClick={() =>
+                  setSelectedAction(
+                    selectedAction === "deposit" ? null : "deposit"
+                  )
+                }
+              >
+                Deposit
+              </Button>
+              <Button
+                size="lg"
+                variant={
+                  selectedAction === "withdraw" ? "secondary" : "default"
+                }
+                className="w-full"
+                onClick={() =>
+                  setSelectedAction(
+                    selectedAction === "withdraw" ? null : "withdraw"
+                  )
+                }
+              >
+                Withdraw
+              </Button>
+              <Button
+                size="lg"
+                variant={selectedAction === "mint" ? "secondary" : "outline"}
+                className="w-full"
+                onClick={() =>
+                  setSelectedAction(selectedAction === "mint" ? null : "mint")
+                }
+              >
+                Mint
+              </Button>
+              <Button
+                size="lg"
+                variant={selectedAction === "redeem" ? "secondary" : "outline"}
+                className="w-full"
+                onClick={() =>
+                  setSelectedAction(
+                    selectedAction === "redeem" ? null : "redeem"
+                  )
+                }
+              >
+                Redeem
+              </Button>
+            </div>
+
+            {renderActionContent()}
+          </CardContent>
+        </Card>
+
+        <div className="text-center">
+          <p className="text-muted-foreground">
+            Need {market.underlyingAsset}?{" "}
+            <Link
+              href="https://stellar.expert/explorer/public/asset/USDC-GA..."
+              className="text-primary hover:underline"
+              target="_blank"
+            >
+              Learn how to obtain and enable {market.underlyingAsset} in your
+              wallet
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="mt-8 border-t">
+        <div className="max-w-7xl mx-auto p-4">
+          <div className="flex justify-between items-center text-sm text-muted-foreground">
+            <div>
+              © {new Date().getFullYear()} Sentinel Protocol. All rights
+              reserved.
+            </div>
+            <div className="flex gap-4">
+              <Link href="/docs" className="hover:text-primary">
+                Documentation
+              </Link>
+              <Link href="/privacy" className="hover:text-primary">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="hover:text-primary">
+                Terms of Service
+              </Link>
+            </div>
+          </div>
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            Warning: The Sentinel protocol may contain bugs. Use it at your own
+            risk.
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
