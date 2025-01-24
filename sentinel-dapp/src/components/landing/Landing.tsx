@@ -424,7 +424,8 @@ const Landing = () => {
             <div className="flex items-center gap-2">
               <Shield className="w-6 h-6 text-primary" />
               <span className="text-sm">
-                © {new Date().getFullYear()} Sentinel. All Rights Reserved.
+                © {new Date().getFullYear()} Sentinel Protocol. All Rights
+                Reserved.
               </span>
             </div>
             <div className="flex gap-6">

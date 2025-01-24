@@ -563,7 +563,8 @@ const App = () => {
                 <span className="font-semibold">Sentinel</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                © {new Date().getFullYear()} Sentinel. All rights reserved.
+                © {new Date().getFullYear()} Sentinel Protocol. All rights
+                reserved.
               </p>
               <div className="flex gap-4">
                 <Link
