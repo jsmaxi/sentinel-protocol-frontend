@@ -77,7 +77,7 @@ const Manage = () => {
             </div>
             <Button onClick={showComingSoon}>
               <Wallet className="mr-2 h-4 w-4" />
-              Connect
+              Connect Wallet
             </Button>
           </div>
         </motion.div>
@@ -105,6 +105,7 @@ const Manage = () => {
 
           <TabsContent value="approve-shares" className="mt-6">
             <Form {...approveSharesForm}>
+              <h2 className="text-xl text-center">Approve Shares</h2>
               <form
                 onSubmit={approveSharesForm.handleSubmit(showComingSoon)}
                 className="space-y-4"
@@ -174,6 +175,7 @@ const Manage = () => {
 
           <TabsContent value="transfer-shares" className="mt-6">
             <Form {...transferSharesForm}>
+              <h2 className="text-xl text-center">Transfer Shares</h2>
               <form
                 onSubmit={transferSharesForm.handleSubmit(showComingSoon)}
                 className="space-y-4"
@@ -230,6 +232,7 @@ const Manage = () => {
 
           <TabsContent value="approve-assets" className="mt-6">
             <Form {...approveAssetsForm}>
+              <h2 className="text-xl text-center">Approve Assets</h2>
               <form
                 onSubmit={approveAssetsForm.handleSubmit(showComingSoon)}
                 className="space-y-4"
@@ -299,6 +302,7 @@ const Manage = () => {
 
           <TabsContent value="transfer-assets" className="mt-6">
             <Form {...transferAssetsForm}>
+              <h2 className="text-xl text-center">Transfer Assets</h2>
               <form
                 onSubmit={transferAssetsForm.handleSubmit(showComingSoon)}
                 className="space-y-4"
@@ -354,8 +358,11 @@ const Manage = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Main Content Area */}
-        <div className="min-h-[60vh]">{/* Content will be added here */}</div>
+        {/* Disclaimer */}
+        <div className="mt-12 text-left text-sm text-muted-foreground">
+          <strong>Warning:</strong> The Sentinel protocol may contain bugs. Use
+          it at your own risk.
+        </div>
 
         {/* Footer */}
         <footer className="mt-16 border-t border-border/40 pt-8 pb-24">
@@ -365,6 +372,12 @@ const Manage = () => {
               reserved.
             </p>
             <div className="flex gap-4">
+              <Link
+                href="#"
+                className="text-sm hover:text-primary transition-colors"
+              >
+                Documentation
+              </Link>
               <Link
                 href="/privacy"
                 className="text-sm hover:text-primary transition-colors"
@@ -384,10 +397,6 @@ const Manage = () => {
                 Contact
               </Link>
             </div>
-          </div>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            Warning: The Sentinel protocol may contain bugs. Use it at your own
-            risk.
           </div>
         </footer>
       </div>

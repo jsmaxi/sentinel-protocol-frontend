@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import { Wallet, ArrowLeft } from "lucide-react";
+import { Wallet, ArrowLeft, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   Select,
@@ -184,7 +184,7 @@ const CreateMarket = () => {
                   name="eventTime"
                   render={({ field: { onChange, value, ...field } }) => (
                     <FormItem>
-                      <FormLabel>Event Time</FormLabel>
+                      <FormLabel>Event Time (UTC)</FormLabel>
                       <FormControl>
                         <Input
                           type="time"
@@ -390,9 +390,15 @@ const CreateMarket = () => {
             href="#"
             className="text-primary hover:underline flex items-center gap-2"
           >
-            📚 Read our documentation to learn more about creating markets
+            Read our documentation to learn more about creating markets{" "}
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
+      </div>
+
+      <div className="mt-4 text-center text-sm text-muted-foreground">
+        <strong>Warning:</strong> The Sentinel protocol may contain bugs. Use it
+        at your own risk.
       </div>
 
       {/* Footer */}
@@ -404,17 +410,19 @@ const CreateMarket = () => {
               reserved.
             </div>
             <div className="flex gap-4">
+              <Link href="/" className="hover:text-primary">
+                Documentation
+              </Link>
               <Link href="/privacy" className="hover:text-primary">
                 Privacy Policy
               </Link>
               <Link href="/terms" className="hover:text-primary">
                 Terms of Service
               </Link>
+              <Link href="/" className="hover:text-primary">
+                Contact
+              </Link>
             </div>
-          </div>
-          <div className="mt-2 text-center text-sm text-muted-foreground">
-            Warning: The Sentinel protocol may contain bugs. Use it at your own
-            risk.
           </div>
         </div>
       </footer>

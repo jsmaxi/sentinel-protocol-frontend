@@ -160,7 +160,7 @@ export default function MarketDetails() {
 
   return (
     <div className="min-h-screen p-4 md:p-8 relative">
-      <div className="absolute inset-0 bg-grid animate-grid-flow opacity-10" />
+      {/* <div className="absolute inset-0 bg-grid animate-grid-flow opacity-10" /> */}
 
       <div className="max-w-7xl mx-auto space-y-8 relative">
         <div className="flex items-center justify-between">
@@ -313,6 +313,11 @@ export default function MarketDetails() {
         </div>
       </div>
 
+      <div className="mt-12 ml-4 text-left text-sm text-muted-foreground">
+        <strong>Warning:</strong> The Sentinel protocol may contain bugs. Use it
+        at your own risk.
+      </div>
+
       {/* Footer */}
       <footer className="mt-8 border-t">
         <div className="max-w-7xl mx-auto p-4">
@@ -331,11 +336,10 @@ export default function MarketDetails() {
               <Link href="/terms" className="hover:text-primary">
                 Terms of Service
               </Link>
+              <Link href="#" className="hover:text-primary">
+                Contact
+              </Link>
             </div>
-          </div>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            Warning: The Sentinel protocol may contain bugs. Use it at your own
-            risk.
           </div>
         </div>
       </footer>

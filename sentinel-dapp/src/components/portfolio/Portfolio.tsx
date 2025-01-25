@@ -340,34 +340,34 @@ const Portfolio = () => {
         </div>
 
         {/* Disclaimer */}
-        <div className="text-center text-sm text-muted-foreground mt-8">
-          Warning: The Sentinel protocol may contain bugs. Use it at your own
-          risk.
+        <div className="text-left text-sm text-muted-foreground mt-8">
+          <strong>Warning:</strong> The Sentinel protocol may contain bugs. Use
+          it at your own risk.
         </div>
 
         {/* Footer */}
-
-        {/* Footer */}
-        <footer className="text-center space-y-4 py-8">
-          <div className="flex items-center justify-center gap-2">
-            {/* <img
-              src="/sentinel-logo.svg"
-              alt="Sentinel Logo"
-              className="h-6 w-6"
-            /> */}
-            <span className="font-semibold">Sentinel</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Sentinel Protocol. All rights
-              reserved.
-            </p>
-            <Link
-              href="#"
-              className="text-sm hover:text-primary transition-colors"
-            >
-              Contact
-            </Link>
+        <footer className="mt-8 border-t">
+          <div className="max-w-7xl mx-auto p-4">
+            <div className="flex justify-between items-center text-sm text-muted-foreground">
+              <div>
+                © {new Date().getFullYear()} Sentinel Protocol. All rights
+                reserved.
+              </div>
+              <div className="flex gap-4">
+                <Link href="/docs" className="hover:text-primary">
+                  Documentation
+                </Link>
+                <Link href="/privacy" className="hover:text-primary">
+                  Privacy Policy
+                </Link>
+                <Link href="/terms" className="hover:text-primary">
+                  Terms of Service
+                </Link>
+                <Link href="#" className="hover:text-primary">
+                  Contact
+                </Link>
+              </div>
+            </div>
           </div>
         </footer>
       </div>

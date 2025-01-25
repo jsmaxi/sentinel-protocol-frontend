@@ -555,6 +555,11 @@ const App = () => {
             </Link>
           </div>
 
+          <div className="mt-6 text-left text-sm text-muted-foreground">
+            <strong>Warning:</strong> The Sentinel protocol may contain bugs.
+            Use it at your own risk.
+          </div>
+
           {/* Footer */}
           <footer className="mt-16 border-t border-border/40 pt-8 pb-24">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -586,10 +591,6 @@ const App = () => {
                   Contact
                 </Link>
               </div>
-            </div>
-            <div className="mt-4 text-center text-sm text-muted-foreground">
-              Warning: The Sentinel protocol may contain bugs. Use it at your
-              own risk.
             </div>
           </footer>
         </main>

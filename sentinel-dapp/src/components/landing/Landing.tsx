@@ -256,20 +256,22 @@ const Landing = () => {
             contracts.
           </p>
           <div className="flex justify-center gap-4 animate-fade-in">
-            <Button
-              size="lg"
-              className="group bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              Explore More
-              <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
             <Link href="/markets">
+              <Button
+                size="lg"
+                className="group bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Start Now
+                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+            <Link href="#">
               <Button
                 size="lg"
                 variant="outline"
                 className="border-primary/20 hover:border-primary/40"
               >
-                Start Now
+                Explore More
               </Button>
             </Link>
           </div>
