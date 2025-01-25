@@ -19,7 +19,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Titillium Web', 'sans-serif'],
+        sans: ['Titillium_Web', 'Arial', 'sans-serif'],
       },
       colors: {
         border: 'hsl(var(--border))',
