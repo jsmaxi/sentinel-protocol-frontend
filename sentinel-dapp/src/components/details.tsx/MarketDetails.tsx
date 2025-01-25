@@ -170,7 +170,10 @@ export default function MarketDetails() {
           >
             ← Back to Markets
           </Link>
-          <Button>Connect Wallet</Button>
+          <Button>
+            <Wallet className="mr-2 h-4 w-4" />
+            Connect Wallet
+          </Button>
         </div>
 
         <Card className="glass">
@@ -313,7 +316,7 @@ export default function MarketDetails() {
         </div>
       </div>
 
-      <div className="mt-12 ml-4 text-left text-sm text-muted-foreground">
+      <div className="mt-12 ml-4 text-center text-sm text-muted-foreground">
         <strong>Warning:</strong> The Sentinel protocol may contain bugs. Use it
         at your own risk.
       </div>
@@ -327,7 +330,11 @@ export default function MarketDetails() {
               reserved.
             </div>
             <div className="flex gap-4">
-              <Link href="/docs" className="hover:text-primary">
+              <Link
+                href="https://github.com/"
+                target="_blank"
+                className="hover:text-primary"
+              >
                 Documentation
               </Link>
               <Link href="/privacy" className="hover:text-primary">

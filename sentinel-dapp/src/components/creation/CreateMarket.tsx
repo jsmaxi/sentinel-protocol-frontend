@@ -387,7 +387,8 @@ const CreateMarket = () => {
         {/* Documentation Link */}
         <div className="mt-8 p-4 border rounded-lg">
           <Link
-            href="#"
+            href="https://github.com/"
+            target="_blank"
             className="text-primary hover:underline flex items-center gap-2"
           >
             Read our documentation to learn more about creating markets{" "}
@@ -410,7 +411,11 @@ const CreateMarket = () => {
               reserved.
             </div>
             <div className="flex gap-4">
-              <Link href="/" className="hover:text-primary">
+              <Link
+                href="https://github.com/"
+                target="_blank"
+                className="hover:text-primary"
+              >
                 Documentation
               </Link>
               <Link href="/privacy" className="hover:text-primary">

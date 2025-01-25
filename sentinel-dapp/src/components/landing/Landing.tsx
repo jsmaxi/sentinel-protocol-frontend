@@ -178,9 +178,18 @@ const Landing = () => {
     <div className="min-h-screen relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 z-0">
-        {/* Change Background and Pulse for light theme! */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1A1F2C] via-background to-[#222222]">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072')] bg-cover bg-center opacity-40 transition-opacity duration-1000 animate-pulse"></div>
+        <div
+          className={`absolute inset-0 ${
+            theme === "dark"
+              ? "bg-gradient-to-b from-[#1A1F2C] via-background to-[#222222]"
+              : "bg-gradient-to-b from-[#ffffff] via-background to-[#e8e8e8]"
+          }`}
+        >
+          <div
+            className={`absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072')] bg-cover bg-center ${
+              theme === "dark" ? "opacity-40" : "opacity-30"
+            }`}
+          ></div>
           <div className="absolute inset-0 bg-grid animate-grid-flow"></div>
         </div>
       </div>
@@ -219,7 +228,7 @@ const Landing = () => {
               Community
             </Link>
             <Link
-              href="#"
+              href="https://github.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm hover:text-primary transition-colors"

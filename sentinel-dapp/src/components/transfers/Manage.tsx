@@ -373,7 +373,8 @@ const Manage = () => {
             </p>
             <div className="flex gap-4">
               <Link
-                href="#"
+                href="https://github.com/"
+                target="_blank"
                 className="text-sm hover:text-primary transition-colors"
               >
                 Documentation

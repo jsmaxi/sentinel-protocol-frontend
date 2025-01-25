@@ -354,7 +354,11 @@ const Portfolio = () => {
                 reserved.
               </div>
               <div className="flex gap-4">
-                <Link href="/docs" className="hover:text-primary">
+                <Link
+                  href="https://github.com/"
+                  target="_blank"
+                  className="hover:text-primary"
+                >
                   Documentation
                 </Link>
                 <Link href="/privacy" className="hover:text-primary">

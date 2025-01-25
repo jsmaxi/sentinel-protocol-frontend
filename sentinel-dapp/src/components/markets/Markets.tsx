@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Wallet,
   Shield,
+  ChartCandlestick,
   TrendingUp,
   Plane,
   Sun,
@@ -249,7 +250,7 @@ const App = () => {
                 Create
               </Link>
               <a
-                href="#"
+                href="https://github.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm hover:text-primary transition-colors"
@@ -326,7 +327,7 @@ const App = () => {
                 <CardTitle className="text-sm font-medium">
                   Active Markets
                 </CardTitle>
-                <Shield className="h-4 w-4 text-muted-foreground" />
+                <ChartCandlestick className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">0</div>
@@ -460,9 +461,9 @@ const App = () => {
               open={isSavedMarketsOpen}
               onOpenChange={setIsSavedMarketsOpen}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center">
                 <h3 className="text-xl font-semibold">Saved Markets</h3>
-                <CollapsibleTrigger asChild>
+                <CollapsibleTrigger asChild className="mx-4">
                   <Button variant="ghost" size="sm">
                     {isSavedMarketsOpen ? "Hide" : "Show"}
                   </Button>
@@ -490,29 +491,32 @@ const App = () => {
           )}
 
           {/* Markets Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredMarkets.map((market) => (
-              <div key={market.id} className="relative group">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => handleSaveMarket(market.id)}
-                  aria-label={
-                    savedMarkets.includes(market.id)
-                      ? "Remove from saved"
-                      : "Add to saved"
-                  }
-                >
-                  <Plus
-                    className={`h-4 w-4 ${
-                      savedMarkets.includes(market.id) ? "text-primary" : ""
-                    }`}
-                  />
-                </Button>
-                <MarketCard market={market} />
-              </div>
-            ))}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">All Markets</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredMarkets.map((market) => (
+                <div key={market.id} className="relative group">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleSaveMarket(market.id)}
+                    aria-label={
+                      savedMarkets.includes(market.id)
+                        ? "Remove from saved"
+                        : "Add to saved"
+                    }
+                  >
+                    <Plus
+                      className={`h-4 w-4 ${
+                        savedMarkets.includes(market.id) ? "text-primary" : ""
+                      }`}
+                    />
+                  </Button>
+                  <MarketCard market={market} />
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Documentation Section */}
@@ -609,12 +613,6 @@ const App = () => {
             <ArrowUp className="h-4 w-4" />
           </Button>
         )}
-
-        <footer className="fixed bottom-0 left-0 right-0 border-t border-border/40 backdrop-blur-sm bg-background/80">
-          <div className="max-w-7xl mx-auto px-4 py-4 flex justify-end">
-            {/* Connect Wallet button removed from here */}
-          </div>
-        </footer>
       </div>
     </div>
   );

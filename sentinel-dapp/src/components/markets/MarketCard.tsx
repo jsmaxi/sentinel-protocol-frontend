@@ -78,36 +78,24 @@ export function MarketCard({ market }: MarketCardProps) {
             </div>
           </div>
 
-          <div className="space-y-2 border-t border-border pt-4">
+          <div className="space-y-2 pt-2">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Oracle</span>
               <span className="text-sm font-medium">{market.oracleName}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Creator</span>
-              {/* <a
-                href={`https://stellar.expert/explorer/public/account/${market.creatorAddress}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium text-primary hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <span className="text-sm font-medium">
                 {market.creatorAddress.slice(0, 4)}...
                 {market.creatorAddress.slice(-4)}
-              </a> */}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Vault</span>
-              {/* <a
-                href={`https://stellar.expert/explorer/public/account/${market.vaultAddress}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium text-primary hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <span className="text-sm font-medium">
                 {market.vaultAddress.slice(0, 4)}...
                 {market.vaultAddress.slice(-4)}
-              </a> */}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Your Shares</span>
@@ -119,7 +107,7 @@ export function MarketCard({ market }: MarketCardProps) {
               </span>
               <span className="text-sm font-medium">{market.totalShares}</span>
             </div>
-            <div className="flex justify-between items-center pt-2">
+            <div className="flex justify-between items-center pt-2 border-t border-border">
               <span className="text-sm text-muted-foreground">
                 Possible Return
               </span>
