@@ -4,7 +4,7 @@
   "private": true,
   "author": "SentinelFi",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack --experimental-https",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -16,6 +16,9 @@
     "npm": "^10.9.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "@stellar/freighter-api": "4.0.0",
+    "@stellar/stellar-sdk": "12.0.0",
+    "bignumber.js": "^9.1.2",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",

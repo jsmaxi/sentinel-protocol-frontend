@@ -7,3 +7,5 @@ cd sentinel-dapp
 
 npm run dev
 ```
+
+https://localhost:3000/
