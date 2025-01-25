@@ -314,7 +314,7 @@ const Portfolio = () => {
                       className="cursor-pointer hover:text-primary"
                       onClick={() => requestSort("type")}
                     >
-                      Type{" "}
+                      Side{" "}
                       {sortConfig?.key === "type" &&
                         (sortConfig.direction === "asc" ? "↑" : "↓")}
                     </TableHead>

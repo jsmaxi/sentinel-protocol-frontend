@@ -84,7 +84,7 @@ export function MarketCard({ market }: MarketCardProps) {
               <span className="text-sm font-medium">{market.oracleName}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Creator</span>
+              <span className="text-sm text-muted-foreground">Admin</span>
               <span className="text-sm font-medium">
                 {market.creatorAddress.slice(0, 4)}...
                 {market.creatorAddress.slice(-4)}

@@ -142,7 +142,7 @@ export default function MarketDetails() {
             <label className="text-sm text-muted-foreground">
               {selectedAction === "mint" || selectedAction === "redeem"
                 ? "Shares Amount"
-                : "Asset Amount"}
+                : "Assets Amount"}
             </label>
             <div className="space-y-2">
               <Input
@@ -311,9 +311,7 @@ export default function MarketDetails() {
                 <Button
                   size="lg"
                   className="w-full"
-                  variant={
-                    selectedAction === "deposit" ? "secondary" : "default"
-                  }
+                  variant={selectedAction === "deposit" ? "default" : "outline"}
                   onClick={() =>
                     setSelectedAction(
                       selectedAction === "deposit" ? null : "deposit"
@@ -324,8 +322,18 @@ export default function MarketDetails() {
                 </Button>
                 <Button
                   size="lg"
+                  variant={selectedAction === "mint" ? "default" : "outline"}
+                  className="w-full"
+                  onClick={() =>
+                    setSelectedAction(selectedAction === "mint" ? null : "mint")
+                  }
+                >
+                  Mint
+                </Button>
+                <Button
+                  size="lg"
                   variant={
-                    selectedAction === "withdraw" ? "secondary" : "default"
+                    selectedAction === "withdraw" ? "default" : "outline"
                   }
                   className="w-full"
                   onClick={() =>
@@ -338,19 +346,7 @@ export default function MarketDetails() {
                 </Button>
                 <Button
                   size="lg"
-                  variant={selectedAction === "mint" ? "secondary" : "outline"}
-                  className="w-full"
-                  onClick={() =>
-                    setSelectedAction(selectedAction === "mint" ? null : "mint")
-                  }
-                >
-                  Mint
-                </Button>
-                <Button
-                  size="lg"
-                  variant={
-                    selectedAction === "redeem" ? "secondary" : "outline"
-                  }
+                  variant={selectedAction === "redeem" ? "default" : "outline"}
                   className="w-full"
                   onClick={() =>
                     setSelectedAction(
