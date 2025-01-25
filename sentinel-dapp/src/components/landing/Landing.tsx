@@ -7,9 +7,8 @@ import {
   ArrowRight,
   Users,
   Wallet,
-  Settings,
   ArrowUp,
-  Airplay,
+  TicketsPlane,
   Target,
   LineChart,
   DollarSign,
@@ -19,6 +18,9 @@ import {
   Twitter,
   Mail,
   CalendarRange,
+  ChevronDown,
+  SearchCheck,
+  Download,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -54,9 +56,10 @@ const features = [
 
 const steps = [
   {
-    icon: Settings,
-    title: "Setup Profile",
-    description: "Create and customize your user profile.",
+    icon: Download,
+    title: "Install Freighter wallet",
+    description:
+      "To interact with the network, install Freighter browser extension.",
   },
   {
     icon: Wallet,
@@ -64,15 +67,15 @@ const steps = [
     description: "Securely connect your digital wallet to our platform.",
   },
   {
-    icon: Shield,
+    icon: SearchCheck,
     title: "Explore Options",
-    description: "Discover a range of insurance solutions tailored for you.",
+    description: "Discover a range of hedge and risk options tailored for you.",
   },
 ];
 
 const useCases = [
   {
-    icon: Airplay,
+    icon: TicketsPlane,
     title: "Flight Hedge",
     description:
       "Protect against flight delays and cancellations with automated payouts based on flight data.",
@@ -164,6 +167,13 @@ const Landing = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const scrollTo = (elementId: string) => {
+    const featuresSection = document.getElementById(elementId);
+    if (featuresSection) {
+      featuresSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Animated Background */}
@@ -178,42 +188,44 @@ const Landing = () => {
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 glass">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Shield className="w-8 h-8 text-primary" />
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Sentinel
-            </h1>
-            <span className="glass px-3 py-1 text-sm rounded-full">
-              Open Beta
-            </span>
-          </div>
+          <Link href="#">
+            <div className="flex items-center gap-4">
+              <Shield className="w-8 h-8 text-primary" />
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Sentinel
+              </h1>
+              <span className="glass px-3 py-1 text-sm rounded-full">
+                Open Beta
+              </span>
+            </div>
+          </Link>
           <div className="flex items-center gap-6">
-            <a
+            <Link
               href="#features"
               className="text-sm hover:text-primary transition-colors"
             >
               Features
-            </a>
-            <a
-              href="#about"
+            </Link>
+            <Link
+              href="#how-it-works"
               className="text-sm hover:text-primary transition-colors"
             >
-              About
-            </a>
-            <a
+              How It Works
+            </Link>
+            <Link
               href="#community"
               className="text-sm hover:text-primary transition-colors"
             >
               Community
-            </a>
-            <a
+            </Link>
+            <Link
               href="#"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm hover:text-primary transition-colors"
             >
               Documentation
-            </a>
+            </Link>
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               className="p-2 hover:bg-accent/10 rounded-md transition-colors"
@@ -275,6 +287,13 @@ const Landing = () => {
               </Button>
             </Link>
           </div>
+          <button
+            onClick={(_) => scrollTo("features")}
+            className="mt-12 p-2 hover:scale-110 transition-all duration-1000 animate-bounce"
+            aria-label="Scroll to features"
+          >
+            <ChevronDown className="w-6 h-6 text-primary" />
+          </button>
         </div>
       </section>
 
@@ -300,7 +319,7 @@ const Landing = () => {
       </section>
 
       {/* Use Cases Carousel Section */}
-      <section className="relative py-20 z-10">
+      <section id="cases" className="relative py-20 z-10">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             Real World Use Cases
@@ -335,6 +354,32 @@ const Landing = () => {
             </CarouselContent>
             <CarouselNext />
           </Carousel>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section id="how-it-works" className="relative py-20 z-10">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            Get Started with Sentinel
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {steps.map((step, index) => (
+              <div
+                key={step.title}
+                className="glass p-6 rounded-lg hover:scale-105 transition-transform border border-primary/10"
+              >
+                <div className="relative">
+                  <step.icon className="w-12 h-12 text-primary mb-4" />
+                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-primary-foreground">
+                    {index + 1}
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
+                <p className="text-muted-foreground">{step.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -405,7 +450,7 @@ const Landing = () => {
           </h2>
           <div className="flex justify-center gap-8">
             {socialLinks.map((social) => (
-              <a
+              <Link
                 key={social.label}
                 href={social.href}
                 target="_blank"
@@ -414,7 +459,7 @@ const Landing = () => {
               >
                 <social.icon className="w-6 h-6 text-primary group-hover:text-accent" />
                 <span className="sr-only">{social.label}</span>
-              </a>
+              </Link>
             ))}
           </div>
         </div>
@@ -432,18 +477,18 @@ const Landing = () => {
               </span>
             </div>
             <div className="flex gap-6">
-              <a
+              <Link
                 href="#"
                 className="text-sm hover:text-primary transition-colors"
               >
                 Privacy Policy
-              </a>
-              <a
+              </Link>
+              <Link
                 href="#"
                 className="text-sm hover:text-primary transition-colors"
               >
                 Terms of Service
-              </a>
+              </Link>
               <Link
                 href="#"
                 className="text-sm hover:text-primary transition-colors"

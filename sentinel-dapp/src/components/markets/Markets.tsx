@@ -519,7 +519,8 @@ const App = () => {
           <Separator className="my-8" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Link
-              href="#"
+              href="https://github.com/"
+              target="_blank"
               className="group flex flex-col items-start space-y-2 p-4 rounded-lg hover:bg-secondary/50 transition-colors"
             >
               <FileText className="h-8 w-8 text-primary" />
@@ -531,7 +532,8 @@ const App = () => {
             </Link>
 
             <Link
-              href="#"
+              href="https://lab.stellar.org/account/fund"
+              target="_blank"
               className="group flex flex-col items-start space-y-2 p-4 rounded-lg hover:bg-secondary/50 transition-colors"
             >
               <Droplet className="h-8 w-8 text-primary" />
@@ -543,7 +545,8 @@ const App = () => {
             </Link>
 
             <Link
-              href="#"
+              href="https://github.com/"
+              target="_blank"
               className="group flex flex-col items-start space-y-2 p-4 rounded-lg hover:bg-secondary/50 transition-colors"
             >
               <Code className="h-8 w-8 text-primary" />
