@@ -301,24 +301,19 @@ const Portfolio = () => {
             </div>
           </div>
           {publicKey ? (
-            loading ? (
-              <Processing />
-            ) : (
-              <span className="text-sm font-medium">
-                Connected:{" "}
-                <Link
-                  href={
-                    `https://stellar.expert/explorer/testnet/account/` +
-                    publicKey
-                  }
-                  target="_blank"
-                  className="hover:underline"
-                >
-                  {publicKey.slice(0, 4)}...
-                  {publicKey.slice(-4)}
-                </Link>
-              </span>
-            )
+            <span className="text-sm font-medium">
+              Connected:{" "}
+              <Link
+                href={
+                  `https://stellar.expert/explorer/testnet/account/` + publicKey
+                }
+                target="_blank"
+                className="hover:underline"
+              >
+                {publicKey.slice(0, 4)}...
+                {publicKey.slice(-4)}
+              </Link>
+            </span>
           ) : (
             <Button onClick={handleConnectWallet}>
               <Wallet className="mr-2 h-4 w-4" />
@@ -328,185 +323,189 @@ const Portfolio = () => {
         </div>
 
         {publicKey ? (
-          <>
-            <div className="bg-card rounded-lg p-4 shadow-sm space-y-6">
-              {/* Filters */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label>Filter by Side</Label>
-                  <RadioGroup
-                    value={selectedType}
-                    onValueChange={(value) =>
-                      setSelectedType(value as typeof selectedType)
-                    }
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="ALL" id="type-all" />
-                      <Label htmlFor="type-all">All</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="HEDGE" id="type-hedge" />
-                      <Label htmlFor="type-hedge">Hedge</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="RISK" id="type-risk" />
-                      <Label htmlFor="type-risk">Risk</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Filter by Status</Label>
-                  <Select
-                    value={selectedStatus}
-                    onValueChange={(value) =>
-                      setSelectedStatus(value as typeof selectedStatus)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">All</SelectItem>
-                      <SelectItem value="LIVE">Live</SelectItem>
-                      <SelectItem value="LIQUiDATED">Liquidated</SelectItem>
-                      <SelectItem value="MATURED">Matured</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Filter by Asset</Label>
-                  <Select
-                    value={selectedAsset}
-                    onValueChange={(value) =>
-                      setSelectedAsset(value as typeof selectedAsset)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select asset" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">All</SelectItem>
-                      <SelectItem value="USDC">USDC</SelectItem>
-                      <SelectItem value="XLM">XLM</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <span className="text-muted-foreground">
-                  Total positions found:{" "}
-                </span>
-                <span className="font-semibold">{sortedMarkets.length}</span>
-              </div>
-
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead
-                      className="cursor-pointer hover:text-primary"
-                      onClick={() => requestSort("name")}
+          loading ? (
+            <Processing />
+          ) : (
+            <>
+              <div className="bg-card rounded-lg p-4 shadow-sm space-y-6">
+                {/* Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label>Filter by Side</Label>
+                    <RadioGroup
+                      value={selectedType}
+                      onValueChange={(value) =>
+                        setSelectedType(value as typeof selectedType)
+                      }
+                      className="flex gap-4"
                     >
-                      Market{" "}
-                      {sortConfig?.key === "name" &&
-                        (sortConfig.direction === "asc" ? "↑" : "↓")}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:text-primary"
-                      onClick={() => requestSort("type")}
-                    >
-                      Side{" "}
-                      {sortConfig?.key === "type" &&
-                        (sortConfig.direction === "asc" ? "↑" : "↓")}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:text-primary"
-                      onClick={() => requestSort("underlyingAsset")}
-                    >
-                      Asset{" "}
-                      {sortConfig?.key === "underlyingAsset" &&
-                        (sortConfig.direction === "asc" ? "↑" : "↓")}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:text-primary"
-                      onClick={() => requestSort("yourShares")}
-                    >
-                      Your Shares{" "}
-                      {sortConfig?.key === "yourShares" &&
-                        (sortConfig.direction === "asc" ? "↑" : "↓")}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:text-primary"
-                      onClick={() => requestSort("eventTime")}
-                    >
-                      Event Time{" "}
-                      {sortConfig?.key === "eventTime" &&
-                        (sortConfig.direction === "asc" ? "↑" : "↓")}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:text-primary"
-                      onClick={() => requestSort("status")}
-                    >
-                      Status{" "}
-                      {sortConfig?.key === "status" &&
-                        (sortConfig.direction === "asc" ? "↑" : "↓")}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:text-primary"
-                      onClick={() => requestSort("possibleReturn")}
-                    >
-                      Possible Return{" "}
-                      {sortConfig?.key === "possibleReturn" &&
-                        (sortConfig.direction === "asc" ? "↑" : "↓")}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedMarkets.map((market) => (
-                    <TableRow key={market.id}>
-                      <TableCell>
-                        <Link
-                          href={`/market/${market.id}`}
-                          className="hover:text-primary"
-                        >
-                          {market.name}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{market.type}</TableCell>
-                      <TableCell>{market.underlyingAsset}</TableCell>
-                      <TableCell>{market.yourShares}</TableCell>
-                      <TableCell>{format(market.eventTime, "PPp")}</TableCell>
-                      <TableCell>{market.status}</TableCell>
-                      <TableCell>{market.possibleReturn}%</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Wallet Balances Section */}
-            <div className="space-y-4 mt-8">
-              <h2 className="text-xl font-semibold">Wallet Balances</h2>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                {walletBalances.map((balance) => (
-                  <div
-                    key={balance.symbol}
-                    className="p-4 rounded-lg border border-border/40 backdrop-blur-sm bg-background/80"
-                  >
-                    <div className="text-sm text-muted-foreground">
-                      {balance.symbol}
-                    </div>
-                    <div className="text-lg font-semibold">
-                      {balance.balance}
-                    </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="ALL" id="type-all" />
+                        <Label htmlFor="type-all">All</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="HEDGE" id="type-hedge" />
+                        <Label htmlFor="type-hedge">Hedge</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="RISK" id="type-risk" />
+                        <Label htmlFor="type-risk">Risk</Label>
+                      </div>
+                    </RadioGroup>
                   </div>
-                ))}
+
+                  <div className="space-y-2">
+                    <Label>Filter by Status</Label>
+                    <Select
+                      value={selectedStatus}
+                      onValueChange={(value) =>
+                        setSelectedStatus(value as typeof selectedStatus)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">All</SelectItem>
+                        <SelectItem value="LIVE">Live</SelectItem>
+                        <SelectItem value="LIQUiDATED">Liquidated</SelectItem>
+                        <SelectItem value="MATURED">Matured</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Filter by Asset</Label>
+                    <Select
+                      value={selectedAsset}
+                      onValueChange={(value) =>
+                        setSelectedAsset(value as typeof selectedAsset)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select asset" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">All</SelectItem>
+                        <SelectItem value="USDC">USDC</SelectItem>
+                        <SelectItem value="XLM">XLM</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <span className="text-muted-foreground">
+                    Total positions found:{" "}
+                  </span>
+                  <span className="font-semibold">{sortedMarkets.length}</span>
+                </div>
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead
+                        className="cursor-pointer hover:text-primary"
+                        onClick={() => requestSort("name")}
+                      >
+                        Market{" "}
+                        {sortConfig?.key === "name" &&
+                          (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:text-primary"
+                        onClick={() => requestSort("type")}
+                      >
+                        Side{" "}
+                        {sortConfig?.key === "type" &&
+                          (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:text-primary"
+                        onClick={() => requestSort("underlyingAsset")}
+                      >
+                        Asset{" "}
+                        {sortConfig?.key === "underlyingAsset" &&
+                          (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:text-primary"
+                        onClick={() => requestSort("yourShares")}
+                      >
+                        Your Shares{" "}
+                        {sortConfig?.key === "yourShares" &&
+                          (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:text-primary"
+                        onClick={() => requestSort("eventTime")}
+                      >
+                        Event Time{" "}
+                        {sortConfig?.key === "eventTime" &&
+                          (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:text-primary"
+                        onClick={() => requestSort("status")}
+                      >
+                        Status{" "}
+                        {sortConfig?.key === "status" &&
+                          (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:text-primary"
+                        onClick={() => requestSort("possibleReturn")}
+                      >
+                        Possible Return{" "}
+                        {sortConfig?.key === "possibleReturn" &&
+                          (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedMarkets.map((market) => (
+                      <TableRow key={market.id}>
+                        <TableCell>
+                          <Link
+                            href={`/market/${market.id}`}
+                            className="hover:text-primary"
+                          >
+                            {market.name}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{market.type}</TableCell>
+                        <TableCell>{market.underlyingAsset}</TableCell>
+                        <TableCell>{market.yourShares}</TableCell>
+                        <TableCell>{format(market.eventTime, "PPp")}</TableCell>
+                        <TableCell>{market.status}</TableCell>
+                        <TableCell>{market.possibleReturn}%</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-            </div>
-          </>
+
+              {/* Wallet Balances Section */}
+              <div className="space-y-4 mt-8">
+                <h2 className="text-xl font-semibold">Wallet Balances</h2>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  {walletBalances.map((balance) => (
+                    <div
+                      key={balance.symbol}
+                      className="p-4 rounded-lg border border-border/40 backdrop-blur-sm bg-background/80"
+                    >
+                      <div className="text-sm text-muted-foreground">
+                        {balance.symbol}
+                      </div>
+                      <div className="text-lg font-semibold">
+                        {balance.balance}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )
         ) : (
           <p className="bold">
             Please connect your Freighter wallet to view all details.
