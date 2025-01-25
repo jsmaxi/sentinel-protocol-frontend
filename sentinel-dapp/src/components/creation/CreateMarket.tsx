@@ -33,6 +33,8 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
 
 type FormData = {
   name: string;
@@ -57,6 +59,49 @@ const CreateMarket = () => {
       exercising: "AUTO",
     },
   });
+  const [publicKey, setPublicKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkFreighter = async () => {
+      try {
+        const connected = await isConnected();
+        if (!connected) throw "Freigher connection returned empty response";
+        if (connected.error)
+          throw `Freighter connection error: ${connected.error}`;
+        if (connected.isConnected) {
+          const pubKey = await getAddress();
+          if (!pubKey) throw "Freigher address returned empty response";
+          if (pubKey.error) throw `Freighter address error: ${pubKey.error}`;
+          setPublicKey(pubKey.address);
+        }
+      } catch (error) {
+        console.error("Error checking Freighter connection:", error);
+        alert("Freighter wallet error. Please check the console for details.");
+      }
+    };
+
+    checkFreighter();
+  }, []);
+
+  const handleConnectWallet = async () => {
+    try {
+      const isAllowed = await setAllowed();
+      if (!isAllowed) throw "Freigher returned empty allowed response";
+      if (isAllowed.error) throw `Freighter allowed error: ${isAllowed.error}`;
+      else
+        console.log(
+          "Successfully added the app to Freighter's Allow List " +
+            isAllowed.isAllowed
+        );
+      const pubKey = await getAddress();
+      if (!pubKey) throw "Freigher address returned empty response";
+      if (pubKey.error) throw `Freighter address error: ${pubKey.error}`;
+      setPublicKey(pubKey.address);
+    } catch (error) {
+      console.error("Error connecting to Freighter:", error);
+      alert("Error connecting wallet. Please check the console for details.");
+    }
+  };
 
   const onSubmit = (data: FormData) => {
     const emptyFields = Object.entries(data).filter(([key, value]) => !value);
@@ -89,10 +134,26 @@ const CreateMarket = () => {
             <ArrowLeft className="h-4 w-4" />
             Back to Markets
           </Link>
-          <Button onClick={() => toast({ title: "Coming Soon" })}>
-            <Wallet className="mr-2 h-4 w-4" />
-            Connect Wallet
-          </Button>
+          {publicKey ? (
+            <span className="text-sm font-medium">
+              Connected:{" "}
+              <Link
+                href={
+                  `https://stellar.expert/explorer/testnet/account/` + publicKey
+                }
+                target="_blank"
+                className="hover:underline"
+              >
+                {publicKey.slice(0, 4)}...
+                {publicKey.slice(-4)}
+              </Link>
+            </span>
+          ) : (
+            <Button onClick={handleConnectWallet}>
+              <Wallet className="mr-2 h-4 w-4" />
+              Connect Wallet
+            </Button>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -103,93 +164,38 @@ const CreateMarket = () => {
             </p>
           </div>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Market Name */}
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Market Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter market name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Description */}
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Describe your market"
-                        className="resize-none"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Event Date and Time */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {publicKey ? (
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
+                {/* Market Name */}
                 <FormField
                   control={form.control}
-                  name="eventDate"
+                  name="name"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Event Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
+                    <FormItem>
+                      <FormLabel>Market Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter market name" {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
+                {/* Description */}
                 <FormField
                   control={form.control}
-                  name="eventTime"
-                  render={({ field: { onChange, value, ...field } }) => (
+                  name="description"
+                  render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Event Time (UTC)</FormLabel>
+                      <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Input
-                          type="time"
-                          onChange={(e) => onChange(e.target.value)}
-                          value={value || ""}
+                        <Textarea
+                          placeholder="Describe your market"
+                          className="resize-none"
                           {...field}
                         />
                       </FormControl>
@@ -197,191 +203,255 @@ const CreateMarket = () => {
                     </FormItem>
                   )}
                 />
-              </div>
 
-              {/* Asset Selection */}
-              <FormField
-                control={form.control}
-                name="asset"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Supported Asset</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select asset" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="USDC">USDC</SelectItem>
-                        <SelectItem value="XLM">XLM</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* Event Date and Time */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="eventDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Event Date</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              {/* Oracle Address */}
-              <FormField
-                control={form.control}
-                name="oracleAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Oracle Address</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter Stellar address" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="eventTime"
+                    render={({ field: { onChange, value, ...field } }) => (
+                      <FormItem>
+                        <FormLabel>Event Time (UTC)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="time"
+                            onChange={(e) => onChange(e.target.value)}
+                            value={value || ""}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-              {/* Commission Fee */}
-              <FormField
-                control={form.control}
-                name="commissionFee"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Commission Fee (%)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        placeholder="Enter commission fee"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Risk Score */}
-              <FormField
-                control={form.control}
-                name="riskScore"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Risk Score</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select risk score" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="LOW">Low</SelectItem>
-                        <SelectItem value="MEDIUM">Medium</SelectItem>
-                        <SelectItem value="HIGH">High</SelectItem>
-                        <SelectItem value="UNKNOWN">Unknown</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Exercising */}
-              <FormField
-                control={form.control}
-                name="exercising"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>Exercising</FormLabel>
-                    <FormControl>
-                      <RadioGroup
+                {/* Asset Selection */}
+                <FormField
+                  control={form.control}
+                  name="asset"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Supported Asset</FormLabel>
+                      <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
-                        className="flex gap-4"
                       >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="AUTO" id="auto" />
-                          <Label htmlFor="auto">Automatic</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="MANUAL" id="manual" />
-                          <Label htmlFor="manual">Manual</Label>
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select asset" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="USDC">USDC</SelectItem>
+                          <SelectItem value="XLM">XLM</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Lock Period */}
-              <FormField
-                control={form.control}
-                name="lockPeriod"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lock Period (seconds)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        placeholder="Enter lock period in seconds"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* Oracle Address */}
+                <FormField
+                  control={form.control}
+                  name="oracleAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Oracle Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter Stellar address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Event Threshold */}
-              <FormField
-                control={form.control}
-                name="eventThreshold"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Event Threshold (seconds)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        placeholder="Enter event threshold in seconds"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* Commission Fee */}
+                <FormField
+                  control={form.control}
+                  name="commissionFee"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Commission Fee (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          placeholder="Enter commission fee"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Unlock Period */}
-              <FormField
-                control={form.control}
-                name="unlockPeriod"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Unlock Period (seconds)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        placeholder="Enter unlock period in seconds"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* Risk Score */}
+                <FormField
+                  control={form.control}
+                  name="riskScore"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Risk Score</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select risk score" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="LOW">Low</SelectItem>
+                          <SelectItem value="MEDIUM">Medium</SelectItem>
+                          <SelectItem value="HIGH">High</SelectItem>
+                          <SelectItem value="UNKNOWN">Unknown</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <Button type="submit" className="w-full">
-                Create Market
-              </Button>
-            </form>
-          </Form>
+                {/* Exercising */}
+                <FormField
+                  control={form.control}
+                  name="exercising"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Exercising</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex gap-4"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="AUTO" id="auto" />
+                            <Label htmlFor="auto">Automatic</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="MANUAL" id="manual" />
+                            <Label htmlFor="manual">Manual</Label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Lock Period */}
+                <FormField
+                  control={form.control}
+                  name="lockPeriod"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lock Period (seconds)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="Enter lock period in seconds"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Event Threshold */}
+                <FormField
+                  control={form.control}
+                  name="eventThreshold"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Event Threshold (seconds)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="Enter event threshold in seconds"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Unlock Period */}
+                <FormField
+                  control={form.control}
+                  name="unlockPeriod"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Unlock Period (seconds)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="Enter unlock period in seconds"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button type="submit" className="w-full">
+                  Create Market
+                </Button>
+              </form>
+            </Form>
+          ) : (
+            <p className="bold">
+              Please connect your Freighter wallet to view all details.
+            </p>
+          )}
         </div>
 
         {/* Documentation Link */}

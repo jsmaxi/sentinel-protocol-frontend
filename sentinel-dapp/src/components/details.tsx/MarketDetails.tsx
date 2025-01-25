@@ -6,9 +6,10 @@ import { Shield, Calendar, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
 
 // Mock data - replace with actual data fetching
 const mockMarket = {
@@ -42,6 +43,49 @@ export default function MarketDetails() {
   const [selectedAction, setSelectedAction] = useState<ActionType>(null);
   const [amount, setAmount] = useState<string>("");
   const [ownerAddress, setOwnerAddress] = useState<string>("");
+  const [publicKey, setPublicKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkFreighter = async () => {
+      try {
+        const connected = await isConnected();
+        if (!connected) throw "Freigher connection returned empty response";
+        if (connected.error)
+          throw `Freighter connection error: ${connected.error}`;
+        if (connected.isConnected) {
+          const pubKey = await getAddress();
+          if (!pubKey) throw "Freigher address returned empty response";
+          if (pubKey.error) throw `Freighter address error: ${pubKey.error}`;
+          setPublicKey(pubKey.address);
+        }
+      } catch (error) {
+        console.error("Error checking Freighter connection:", error);
+        alert("Freighter wallet error. Please check the console for details.");
+      }
+    };
+
+    checkFreighter();
+  }, []);
+
+  const handleConnectWallet = async () => {
+    try {
+      const isAllowed = await setAllowed();
+      if (!isAllowed) throw "Freigher returned empty allowed response";
+      if (isAllowed.error) throw `Freighter allowed error: ${isAllowed.error}`;
+      else
+        console.log(
+          "Successfully added the app to Freighter's Allow List " +
+            isAllowed.isAllowed
+        );
+      const pubKey = await getAddress();
+      if (!pubKey) throw "Freigher address returned empty response";
+      if (pubKey.error) throw `Freighter address error: ${pubKey.error}`;
+      setPublicKey(pubKey.address);
+    } catch (error) {
+      console.error("Error connecting to Freighter:", error);
+      alert("Error connecting wallet. Please check the console for details.");
+    }
+  };
 
   const calculateReturn = () => {
     const inputAmount = parseFloat(amount) || 0;
@@ -170,147 +214,172 @@ export default function MarketDetails() {
           >
             ← Back to Markets
           </Link>
-          <Button>
-            <Wallet className="mr-2 h-4 w-4" />
-            Connect Wallet
-          </Button>
+          {publicKey ? (
+            <span className="text-sm font-medium">
+              Connected:{" "}
+              <Link
+                href={
+                  `https://stellar.expert/explorer/testnet/account/` + publicKey
+                }
+                target="_blank"
+                className="hover:underline"
+              >
+                {publicKey.slice(0, 4)}...
+                {publicKey.slice(-4)}
+              </Link>
+            </span>
+          ) : (
+            <Button onClick={handleConnectWallet}>
+              <Wallet className="mr-2 h-4 w-4" />
+              Connect Wallet
+            </Button>
+          )}
         </div>
 
-        <Card className="glass">
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-2xl">{market.name}</CardTitle>
-                <p className="text-muted-foreground mt-2">
-                  {market.description}
-                </p>
-              </div>
-              <Badge className="bg-green-500/20 text-green-500">
-                {market.status}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <span className="text-sm text-muted-foreground">
-                  Selected Side
-                </span>
-                <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  <span className="text-lg font-semibold">
-                    {market.selectedSide}
-                  </span>
+        {publicKey ? (
+          <Card className="glass">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-2xl">{market.name}</CardTitle>
+                  <p className="text-muted-foreground mt-2">
+                    {market.description}
+                  </p>
                 </div>
+                <Badge className="bg-green-500/20 text-green-500">
+                  {market.status}
+                </Badge>
               </div>
-              <div className="space-y-2">
-                <span className="text-sm text-muted-foreground">
-                  Wallet Balance
-                </span>
-                <div className="flex items-center gap-2">
-                  <Wallet className="h-5 w-5" />
-                  <span className="text-lg font-semibold">
-                    {market.walletBalance} {market.underlyingAsset}
+            </CardHeader>
+            <CardContent className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <span className="text-sm text-muted-foreground">
+                    Selected Side
                   </span>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <span className="text-sm text-muted-foreground">
-                  Vault Balances
-                </span>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">Hedge:</span>
-                    <span>
-                      {market.hedgeVaultBalance} {market.underlyingAsset}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">Risk:</span>
-                    <span>
-                      {market.riskVaultBalance} {market.underlyingAsset}
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    <span className="text-lg font-semibold">
+                      {market.selectedSide}
                     </span>
                   </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <span className="text-sm text-muted-foreground">
-                  Event Time
-                </span>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  <span className="text-lg font-semibold">
-                    {format(market.eventTime, "PPp")}
+                <div className="space-y-2">
+                  <span className="text-sm text-muted-foreground">
+                    Wallet Balance
                   </span>
+                  <div className="flex items-center gap-2">
+                    <Wallet className="h-5 w-5" />
+                    <span className="text-lg font-semibold">
+                      {market.walletBalance} {market.underlyingAsset}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <span className="text-sm text-muted-foreground">
+                    Vault Balances
+                  </span>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">Hedge:</span>
+                      <span>
+                        {market.hedgeVaultBalance} {market.underlyingAsset}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">Risk:</span>
+                      <span>
+                        {market.riskVaultBalance} {market.underlyingAsset}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <span className="text-sm text-muted-foreground">
+                    Event Time
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    <span className="text-lg font-semibold">
+                      {format(market.eventTime, "PPp")}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button
-                size="lg"
-                className="w-full"
-                variant={selectedAction === "deposit" ? "secondary" : "default"}
-                onClick={() =>
-                  setSelectedAction(
-                    selectedAction === "deposit" ? null : "deposit"
-                  )
-                }
-              >
-                Deposit
-              </Button>
-              <Button
-                size="lg"
-                variant={
-                  selectedAction === "withdraw" ? "secondary" : "default"
-                }
-                className="w-full"
-                onClick={() =>
-                  setSelectedAction(
-                    selectedAction === "withdraw" ? null : "withdraw"
-                  )
-                }
-              >
-                Withdraw
-              </Button>
-              <Button
-                size="lg"
-                variant={selectedAction === "mint" ? "secondary" : "outline"}
-                className="w-full"
-                onClick={() =>
-                  setSelectedAction(selectedAction === "mint" ? null : "mint")
-                }
-              >
-                Mint
-              </Button>
-              <Button
-                size="lg"
-                variant={selectedAction === "redeem" ? "secondary" : "outline"}
-                className="w-full"
-                onClick={() =>
-                  setSelectedAction(
-                    selectedAction === "redeem" ? null : "redeem"
-                  )
-                }
-              >
-                Redeem
-              </Button>
-            </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Button
+                  size="lg"
+                  className="w-full"
+                  variant={
+                    selectedAction === "deposit" ? "secondary" : "default"
+                  }
+                  onClick={() =>
+                    setSelectedAction(
+                      selectedAction === "deposit" ? null : "deposit"
+                    )
+                  }
+                >
+                  Deposit
+                </Button>
+                <Button
+                  size="lg"
+                  variant={
+                    selectedAction === "withdraw" ? "secondary" : "default"
+                  }
+                  className="w-full"
+                  onClick={() =>
+                    setSelectedAction(
+                      selectedAction === "withdraw" ? null : "withdraw"
+                    )
+                  }
+                >
+                  Withdraw
+                </Button>
+                <Button
+                  size="lg"
+                  variant={selectedAction === "mint" ? "secondary" : "outline"}
+                  className="w-full"
+                  onClick={() =>
+                    setSelectedAction(selectedAction === "mint" ? null : "mint")
+                  }
+                >
+                  Mint
+                </Button>
+                <Button
+                  size="lg"
+                  variant={
+                    selectedAction === "redeem" ? "secondary" : "outline"
+                  }
+                  className="w-full"
+                  onClick={() =>
+                    setSelectedAction(
+                      selectedAction === "redeem" ? null : "redeem"
+                    )
+                  }
+                >
+                  Redeem
+                </Button>
+              </div>
 
-            {renderActionContent()}
-          </CardContent>
-        </Card>
+              {renderActionContent()}
+            </CardContent>
+          </Card>
+        ) : (
+          <p className="bold">
+            Please connect your Freighter wallet to view all details.
+          </p>
+        )}
 
         <div className="text-center">
           <p className="text-muted-foreground">
-            Need {market.underlyingAsset}?{" "}
+            Wonder how assets work?{" "}
             <Link
-              href="https://stellar.expert/explorer/public/asset/USDC-GA..."
+              href="https://stellar.org/use-cases/ramps"
               className="text-primary hover:underline"
               target="_blank"
             >
-              Learn how to obtain and enable {market.underlyingAsset} in your
-              wallet
+              Learn how to obtain and enable crypto asset in your wallet
             </Link>
           </p>
         </div>

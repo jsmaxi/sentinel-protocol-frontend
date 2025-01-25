@@ -43,6 +43,7 @@ import {
 import { useState, useEffect } from "react";
 import { Market } from "@/types/market";
 import Link from "next/link";
+import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
 
 const mockMarkets = [
   {
@@ -139,6 +140,49 @@ const App = () => {
   const [assetFilter, setAssetFilter] = useState<string | "ALL">("ALL");
   const [isSavedMarketsOpen, setIsSavedMarketsOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [publicKey, setPublicKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkFreighter = async () => {
+      try {
+        const connected = await isConnected();
+        if (!connected) throw "Freigher connection returned empty response";
+        if (connected.error)
+          throw `Freighter connection error: ${connected.error}`;
+        if (connected.isConnected) {
+          const pubKey = await getAddress();
+          if (!pubKey) throw "Freigher address returned empty response";
+          if (pubKey.error) throw `Freighter address error: ${pubKey.error}`;
+          setPublicKey(pubKey.address);
+        }
+      } catch (error) {
+        console.error("Error checking Freighter connection:", error);
+        alert("Freighter wallet error. Please check the console for details.");
+      }
+    };
+
+    checkFreighter();
+  }, []);
+
+  const handleConnectWallet = async () => {
+    try {
+      const isAllowed = await setAllowed();
+      if (!isAllowed) throw "Freigher returned empty allowed response";
+      if (isAllowed.error) throw `Freighter allowed error: ${isAllowed.error}`;
+      else
+        console.log(
+          "Successfully added the app to Freighter's Allow List " +
+            isAllowed.isAllowed
+        );
+      const pubKey = await getAddress();
+      if (!pubKey) throw "Freigher address returned empty response";
+      if (pubKey.error) throw `Freighter address error: ${pubKey.error}`;
+      setPublicKey(pubKey.address);
+    } catch (error) {
+      console.error("Error connecting to Freighter:", error);
+      alert("Error connecting wallet. Please check the console for details.");
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -268,10 +312,27 @@ const App = () => {
                   <Moon className="h-4 w-4" />
                 )}
               </button>
-              <Button onClick={showComingSoon}>
-                <Wallet className="mr-2 h-4 w-4" />
-                Connect Wallet
-              </Button>
+              {publicKey ? (
+                <span className="text-sm font-medium">
+                  Connected:{" "}
+                  <Link
+                    href={
+                      `https://stellar.expert/explorer/testnet/account/` +
+                      publicKey
+                    }
+                    target="_blank"
+                    className="hover:underline"
+                  >
+                    {publicKey.slice(0, 4)}...
+                    {publicKey.slice(-4)}
+                  </Link>
+                </span>
+              ) : (
+                <Button onClick={handleConnectWallet}>
+                  <Wallet className="mr-2 h-4 w-4" />
+                  Connect Wallet
+                </Button>
+              )}
             </div>
           </div>
         </header>
@@ -309,220 +370,232 @@ const App = () => {
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="glass">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Value Locked
-                </CardTitle>
-                <Wallet className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">$2.2k</div>
-              </CardContent>
-            </Card>
-            <Card className="glass">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Active Markets
-                </CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">2</div>
-              </CardContent>
-            </Card>
-            <Card className="glass">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Liquidation Percentage
-                </CardTitle>
-                <Percent className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">25%</div>
-              </CardContent>
-            </Card>
-            <Card className="glass">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Protected Events
-                </CardTitle>
-                <Plane className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">5</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Market Type Selection, Sort, Filter, and Search */}
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <RadioGroup
-              defaultValue="HEDGE"
-              onValueChange={(value) =>
-                setMarketType(value as "HEDGE" | "RISK")
-              }
-              className="flex gap-4"
-            >
-              <p>Side:</p>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="HEDGE" id="hedge" />
-                <Label htmlFor="hedge">Hedge Markets</Label>
+          {publicKey ? (
+            <>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="glass">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Total Value Locked
+                    </CardTitle>
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">$2.2k</div>
+                  </CardContent>
+                </Card>
+                <Card className="glass">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Active Markets
+                    </CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">2</div>
+                  </CardContent>
+                </Card>
+                <Card className="glass">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Liquidation Percentage
+                    </CardTitle>
+                    <Percent className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">25%</div>
+                  </CardContent>
+                </Card>
+                <Card className="glass">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Protected Events
+                    </CardTitle>
+                    <Plane className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">5</div>
+                  </CardContent>
+                </Card>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="RISK" id="risk" />
-                <Label htmlFor="risk">Risk Markets</Label>
+
+              {/* Market Type Selection, Sort, Filter, and Search */}
+              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                <RadioGroup
+                  defaultValue="HEDGE"
+                  onValueChange={(value) =>
+                    setMarketType(value as "HEDGE" | "RISK")
+                  }
+                  className="flex gap-4"
+                >
+                  <p>Side:</p>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="HEDGE" id="hedge" />
+                    <Label htmlFor="hedge">Hedge Markets</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="RISK" id="risk" />
+                    <Label htmlFor="risk">Risk Markets</Label>
+                  </div>
+                </RadioGroup>
+
+                <div className="flex gap-2 items-center">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <SortAsc className="h-4 w-4 mr-2" />
+                        Sort
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setSortBy("date")}>
+                        Date
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortBy("risk")}>
+                        Risk Level
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortBy("return")}>
+                        Possible Return
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Filter className="h-4 w-4 mr-2" />
+                        Filter
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuLabel>Status</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => setStatusFilter("ALL")}>
+                        All
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setStatusFilter("LIVE")}>
+                        Live
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setStatusFilter("LIQUIDATED")}
+                      >
+                        Paused
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setStatusFilter("MATURED")}
+                      >
+                        Ended
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel>Risk Level</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => setRiskFilter("ALL")}>
+                        All
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setRiskFilter("LOW")}>
+                        Low
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setRiskFilter("MEDIUM")}>
+                        Medium
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setRiskFilter("HIGH")}>
+                        High
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel>Asset</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => setAssetFilter("ALL")}>
+                        All
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setAssetFilter("USDC")}>
+                        USDC
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <div className="relative w-full md:w-64">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search markets..."
+                      className="pl-8"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
-            </RadioGroup>
 
-            <div className="flex gap-2 items-center">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <SortAsc className="h-4 w-4 mr-2" />
-                    Sort
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setSortBy("date")}>
-                    Date
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy("risk")}>
-                    Risk Level
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy("return")}>
-                    Possible Return
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* Saved Markets */}
+              {savedMarkets.length > 0 && (
+                <Collapsible
+                  open={isSavedMarketsOpen}
+                  onOpenChange={setIsSavedMarketsOpen}
+                >
+                  <div className="flex items-center">
+                    <h3 className="text-xl font-semibold">Saved Markets</h3>
+                    <CollapsibleTrigger asChild className="mx-4">
+                      <Button variant="ghost" size="sm">
+                        {isSavedMarketsOpen ? "Hide" : "Show"}
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+                  <CollapsibleContent className="mt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {savedFilteredMarkets.map((market) => (
+                        <div key={market.id} className="relative group">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleSaveMarket(market.id)}
+                            aria-label="Remove from saved"
+                          >
+                            <Plus className="h-4 w-4 text-primary" />
+                          </Button>
+                          <MarketCard market={market} />
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Filter className="h-4 w-4 mr-2" />
-                    Filter
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuLabel>Status</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => setStatusFilter("ALL")}>
-                    All
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("LIVE")}>
-                    Live
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setStatusFilter("LIQUIDATED")}
-                  >
-                    Paused
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("MATURED")}>
-                    Ended
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel>Risk Level</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => setRiskFilter("ALL")}>
-                    All
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setRiskFilter("LOW")}>
-                    Low
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setRiskFilter("MEDIUM")}>
-                    Medium
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setRiskFilter("HIGH")}>
-                    High
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel>Asset</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => setAssetFilter("ALL")}>
-                    All
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setAssetFilter("USDC")}>
-                    USDC
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <div className="relative w-full md:w-64">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search markets..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Saved Markets */}
-          {savedMarkets.length > 0 && (
-            <Collapsible
-              open={isSavedMarketsOpen}
-              onOpenChange={setIsSavedMarketsOpen}
-            >
-              <div className="flex items-center">
-                <h3 className="text-xl font-semibold">Saved Markets</h3>
-                <CollapsibleTrigger asChild className="mx-4">
-                  <Button variant="ghost" size="sm">
-                    {isSavedMarketsOpen ? "Hide" : "Show"}
-                  </Button>
-                </CollapsibleTrigger>
-              </div>
-              <CollapsibleContent className="mt-4">
+              {/* Markets Grid */}
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Found Markets</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {savedFilteredMarkets.map((market) => (
+                  {filteredMarkets.map((market) => (
                     <div key={market.id} className="relative group">
                       <Button
                         variant="ghost"
                         size="icon"
                         className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => handleSaveMarket(market.id)}
-                        aria-label="Remove from saved"
+                        aria-label={
+                          savedMarkets.includes(market.id)
+                            ? "Remove from saved"
+                            : "Add to saved"
+                        }
                       >
-                        <Plus className="h-4 w-4 text-primary" />
+                        <Plus
+                          className={`h-4 w-4 ${
+                            savedMarkets.includes(market.id)
+                              ? "text-primary"
+                              : ""
+                          }`}
+                        />
                       </Button>
                       <MarketCard market={market} />
                     </div>
                   ))}
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
+              </div>
+            </>
+          ) : (
+            <p className="bold">
+              Please connect your Freighter wallet to view all details.
+            </p>
           )}
-
-          {/* Markets Grid */}
-          <div>
-            <h3 className="text-xl font-semibold mb-4">Found Markets</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredMarkets.map((market) => (
-                <div key={market.id} className="relative group">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleSaveMarket(market.id)}
-                    aria-label={
-                      savedMarkets.includes(market.id)
-                        ? "Remove from saved"
-                        : "Add to saved"
-                    }
-                  >
-                    <Plus
-                      className={`h-4 w-4 ${
-                        savedMarkets.includes(market.id) ? "text-primary" : ""
-                      }`}
-                    />
-                  </Button>
-                  <MarketCard market={market} />
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Documentation Section */}
           <Separator className="my-8" />
