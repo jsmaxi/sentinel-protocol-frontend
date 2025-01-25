@@ -108,7 +108,7 @@ const roadmapItems = [
   {
     quarter: "Q1 2025",
     title: "Foundation",
-    items: ["Platform Launch", "Core Features", "Security Audit"],
+    items: ["Launch Beta", "Core Features", "Security Audit"],
   },
   {
     quarter: "Q2 2025",
@@ -123,7 +123,7 @@ const roadmapItems = [
   {
     quarter: "Q4 2025",
     title: "Innovation",
-    items: ["AI Integration", "Cross-chain Support", "Governance Launch"],
+    items: ["AI Integration", "Cross-chain Support", "Rewards Program"],
   },
 ];
 
@@ -286,7 +286,7 @@ const Landing = () => {
                 <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Link href="#">
+            <Link href="https://stellar.org/soroban" target="_blank">
               <Button
                 size="lg"
                 variant="outline"
@@ -487,13 +487,13 @@ const Landing = () => {
             </div>
             <div className="flex gap-6">
               <Link
-                href="#"
+                href="/policy"
                 className="text-sm hover:text-primary transition-colors"
               >
                 Privacy Policy
               </Link>
               <Link
-                href="#"
+                href="/terms"
                 className="text-sm hover:text-primary transition-colors"
               >
                 Terms of Service

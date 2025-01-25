@@ -337,7 +337,7 @@ export default function MarketDetails() {
               >
                 Documentation
               </Link>
-              <Link href="/privacy" className="hover:text-primary">
+              <Link href="/policy" className="hover:text-primary">
                 Privacy Policy
               </Link>
               <Link href="/terms" className="hover:text-primary">

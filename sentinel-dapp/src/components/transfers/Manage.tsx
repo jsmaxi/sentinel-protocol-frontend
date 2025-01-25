@@ -380,7 +380,7 @@ const Manage = () => {
                 Documentation
               </Link>
               <Link
-                href="/privacy"
+                href="/policy"
                 className="text-sm hover:text-primary transition-colors"
               >
                 Privacy Policy

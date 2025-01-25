@@ -580,7 +580,7 @@ const App = () => {
               </p>
               <div className="flex gap-4">
                 <Link
-                  href="/privacy"
+                  href="/policy"
                   className="text-sm hover:text-primary transition-colors"
                 >
                   Privacy Policy
