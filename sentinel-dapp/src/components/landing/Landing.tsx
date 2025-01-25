@@ -168,6 +168,7 @@ const Landing = () => {
     <div className="min-h-screen relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 z-0">
+        {/* Change Background and Pulse for light theme! */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#1A1F2C] via-background to-[#222222]">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072')] bg-cover bg-center opacity-40 transition-opacity duration-1000 animate-pulse"></div>
           <div className="absolute inset-0 bg-grid animate-grid-flow"></div>

@@ -7,6 +7,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const queryClient = new QueryClient();
 
@@ -29,15 +30,25 @@ const AnimatedRoutes = ({ children }: { children: React.ReactNode }) => {
 };
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    // <ThemeProvider defaultTheme="dark" attribute="class">
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AnimatedRoutes>{children}</AnimatedRoutes>
-      </TooltipProvider>
-    </QueryClientProvider>
-    // </ThemeProvider>
+    <ThemeProvider defaultTheme="dark" attribute="class">
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AnimatedRoutes>{children}</AnimatedRoutes>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
