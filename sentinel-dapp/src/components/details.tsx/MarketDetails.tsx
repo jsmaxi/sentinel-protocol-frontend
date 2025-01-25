@@ -10,6 +10,24 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
+import {
+  BASE_FEE,
+  Contract,
+  Networks,
+  scValToNative,
+  SorobanRpc,
+  TransactionBuilder,
+} from "@stellar/stellar-sdk";
+import {
+  ParsedSorobanError,
+  SorobanErrorParser,
+} from "../../utils/SorobanErrorParser";
+import Processing from "../shared/Processing";
+
+const SOROBAN_URL = "https://soroban-testnet.stellar.org:443";
+const CONTRACT_ID = "CCXPET3VSGNFRZMGDAQ2WLF5G4CRQN22J7XAQGY5VACJYK4IUGCR2ZOL";
+const NETWORK_PASSPHRASE = Networks.TESTNET;
+const TIMEOUT_SEC = 30;
 
 // Mock data - replace with actual data fetching
 const mockMarket = {
@@ -44,6 +62,8 @@ export default function MarketDetails() {
   const [amount, setAmount] = useState<string>("");
   const [ownerAddress, setOwnerAddress] = useState<string>("");
   const [publicKey, setPublicKey] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<ParsedSorobanError | null>(null);
 
   useEffect(() => {
     const checkFreighter = async () => {
@@ -66,6 +86,27 @@ export default function MarketDetails() {
 
     checkFreighter();
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      try {
+        if (isMounted) {
+          const hedge = await getContractData("hedge_address");
+          const risk = await getContractData("risk_address");
+          console.log(hedge, risk);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    if (publicKey) fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, [publicKey]);
 
   const handleConnectWallet = async () => {
     try {
@@ -110,6 +151,71 @@ export default function MarketDetails() {
     setSelectedAction(null);
     setAmount("");
     setOwnerAddress("");
+  };
+
+  const getContractData = async (operationName: string) => {
+    if (!publicKey) {
+      console.error("Wallet not connected");
+      return;
+    }
+
+    if (!CONTRACT_ID) {
+      console.error("Contract ID missing");
+      return;
+    }
+
+    if (!SOROBAN_URL) {
+      console.error("Soroban URL missing");
+      return;
+    }
+
+    if (!operationName) {
+      console.error("Operation name missing");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const server = new SorobanRpc.Server(SOROBAN_URL);
+      const account = await server.getAccount(publicKey);
+      const contract = new Contract(CONTRACT_ID);
+
+      const operation = contract.call(operationName);
+
+      const transaction = new TransactionBuilder(account, {
+        fee: BASE_FEE,
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .setTimeout(TIMEOUT_SEC)
+        .addOperation(operation)
+        .build();
+
+      const simulated = await server.simulateTransaction(transaction);
+      const sim: any = simulated;
+
+      if (sim.error) {
+        console.log("Received error", typeof sim.error);
+        // const parsed = SorobanErrorParser.parse(sim.error, generateErrorMap());
+        // setError(parsed);
+      } else {
+        console.log("cost:", sim.cost);
+        console.log("result:", sim.result);
+        console.log("latest ledger:", sim.latestLedger);
+        console.log(
+          "human readable result:",
+          scValToNative(sim.result?.retval)
+        );
+        const returnValue: any = scValToNative(sim.result?.retval);
+        console.log("Value: ", returnValue);
+      }
+    } catch (error) {
+      console.log("Error loading data.", error);
+      alert("Error loading data. Please check the console for details.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderActionContent = () => {
@@ -237,130 +343,140 @@ export default function MarketDetails() {
         </div>
 
         {publicKey ? (
-          <Card className="glass">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-2xl">{market.name}</CardTitle>
-                  <p className="text-muted-foreground mt-2">
-                    {market.description}
-                  </p>
-                </div>
-                <Badge className="bg-green-500/20 text-green-500">
-                  {market.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <span className="text-sm text-muted-foreground">
-                    Selected Side
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    <span className="text-lg font-semibold">
-                      {market.selectedSide}
-                    </span>
+          loading ? (
+            <Processing />
+          ) : (
+            <Card className="glass">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-2xl">{market.name}</CardTitle>
+                    <p className="text-muted-foreground mt-2">
+                      {market.description}
+                    </p>
                   </div>
+                  <Badge className="bg-green-500/20 text-green-500">
+                    {market.status}
+                  </Badge>
                 </div>
-                <div className="space-y-2">
-                  <span className="text-sm text-muted-foreground">
-                    Wallet Balance
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Wallet className="h-5 w-5" />
-                    <span className="text-lg font-semibold">
-                      {market.walletBalance} {market.underlyingAsset}
+              </CardHeader>
+              <CardContent className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">
+                      Selected Side
                     </span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <span className="text-sm text-muted-foreground">
-                    Vault Balances
-                  </span>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-muted-foreground">Hedge:</span>
-                      <span>
-                        {market.hedgeVaultBalance} {market.underlyingAsset}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-muted-foreground">Risk:</span>
-                      <span>
-                        {market.riskVaultBalance} {market.underlyingAsset}
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      <span className="text-lg font-semibold">
+                        {market.selectedSide}
                       </span>
                     </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <span className="text-sm text-muted-foreground">
-                    Event Time
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    <span className="text-lg font-semibold">
-                      {format(market.eventTime, "PPp")}
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">
+                      Wallet Balance
                     </span>
+                    <div className="flex items-center gap-2">
+                      <Wallet className="h-5 w-5" />
+                      <span className="text-lg font-semibold">
+                        {market.walletBalance} {market.underlyingAsset}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">
+                      Vault Balances
+                    </span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-muted-foreground">Hedge:</span>
+                        <span>
+                          {market.hedgeVaultBalance} {market.underlyingAsset}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-muted-foreground">Risk:</span>
+                        <span>
+                          {market.riskVaultBalance} {market.underlyingAsset}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">
+                      Event Time
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      <span className="text-lg font-semibold">
+                        {format(market.eventTime, "PPp")}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Button
-                  size="lg"
-                  className="w-full"
-                  variant={selectedAction === "deposit" ? "default" : "outline"}
-                  onClick={() =>
-                    setSelectedAction(
-                      selectedAction === "deposit" ? null : "deposit"
-                    )
-                  }
-                >
-                  Deposit
-                </Button>
-                <Button
-                  size="lg"
-                  variant={selectedAction === "mint" ? "default" : "outline"}
-                  className="w-full"
-                  onClick={() =>
-                    setSelectedAction(selectedAction === "mint" ? null : "mint")
-                  }
-                >
-                  Mint
-                </Button>
-                <Button
-                  size="lg"
-                  variant={
-                    selectedAction === "withdraw" ? "default" : "outline"
-                  }
-                  className="w-full"
-                  onClick={() =>
-                    setSelectedAction(
-                      selectedAction === "withdraw" ? null : "withdraw"
-                    )
-                  }
-                >
-                  Withdraw
-                </Button>
-                <Button
-                  size="lg"
-                  variant={selectedAction === "redeem" ? "default" : "outline"}
-                  className="w-full"
-                  onClick={() =>
-                    setSelectedAction(
-                      selectedAction === "redeem" ? null : "redeem"
-                    )
-                  }
-                >
-                  Redeem
-                </Button>
-              </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Button
+                    size="lg"
+                    className="w-full"
+                    variant={
+                      selectedAction === "deposit" ? "default" : "outline"
+                    }
+                    onClick={() =>
+                      setSelectedAction(
+                        selectedAction === "deposit" ? null : "deposit"
+                      )
+                    }
+                  >
+                    Deposit
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant={selectedAction === "mint" ? "default" : "outline"}
+                    className="w-full"
+                    onClick={() =>
+                      setSelectedAction(
+                        selectedAction === "mint" ? null : "mint"
+                      )
+                    }
+                  >
+                    Mint
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant={
+                      selectedAction === "withdraw" ? "default" : "outline"
+                    }
+                    className="w-full"
+                    onClick={() =>
+                      setSelectedAction(
+                        selectedAction === "withdraw" ? null : "withdraw"
+                      )
+                    }
+                  >
+                    Withdraw
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant={
+                      selectedAction === "redeem" ? "default" : "outline"
+                    }
+                    className="w-full"
+                    onClick={() =>
+                      setSelectedAction(
+                        selectedAction === "redeem" ? null : "redeem"
+                      )
+                    }
+                  >
+                    Redeem
+                  </Button>
+                </div>
 
-              {renderActionContent()}
-            </CardContent>
-          </Card>
+                {renderActionContent()}
+              </CardContent>
+            </Card>
+          )
         ) : (
           <p className="bold">
             Please connect your Freighter wallet to view all details.
@@ -396,7 +512,7 @@ export default function MarketDetails() {
             </div>
             <div className="flex gap-4">
               <Link
-                href="https://github.com/"
+                href="https://github.com/SentinelFi/SentinelFi"
                 target="_blank"
                 className="hover:text-primary"
               >

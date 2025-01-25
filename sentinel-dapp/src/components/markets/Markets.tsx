@@ -44,6 +44,19 @@ import { useState, useEffect } from "react";
 import { Market } from "@/types/market";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
+import {
+  BASE_FEE,
+  Contract,
+  Networks,
+  scValToNative,
+  SorobanRpc,
+  TransactionBuilder,
+} from "@stellar/stellar-sdk";
+import {
+  ParsedSorobanError,
+  SorobanErrorParser,
+} from "../../utils/SorobanErrorParser";
+import Processing from "../shared/Processing";
 
 const mockMarkets = [
   {
@@ -124,6 +137,11 @@ const mockMarkets = [
   },
 ];
 
+const SOROBAN_URL = "https://soroban-testnet.stellar.org:443";
+const CONTRACT_ID = "CCXPET3VSGNFRZMGDAQ2WLF5G4CRQN22J7XAQGY5VACJYK4IUGCR2ZOL";
+const NETWORK_PASSPHRASE = Networks.TESTNET;
+const TIMEOUT_SEC = 30;
+
 const App = () => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
@@ -141,6 +159,8 @@ const App = () => {
   const [isSavedMarketsOpen, setIsSavedMarketsOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [publicKey, setPublicKey] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<ParsedSorobanError | null>(null);
 
   useEffect(() => {
     const checkFreighter = async () => {
@@ -185,6 +205,27 @@ const App = () => {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      try {
+        if (isMounted) {
+          const hedge = await getContractData("hedge_address");
+          const risk = await getContractData("risk_address");
+          console.log(hedge, risk);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    if (publicKey) fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, [publicKey]);
+
+  useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 400);
     };
@@ -195,13 +236,6 @@ const App = () => {
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const showComingSoon = () => {
-    toast({
-      title: "Coming Soon",
-      description: "This feature is under development.",
-    });
   };
 
   const handleSaveMarket = (marketId: string) => {
@@ -220,6 +254,71 @@ const App = () => {
         return [...prev, marketId];
       }
     });
+  };
+
+  const getContractData = async (operationName: string) => {
+    if (!publicKey) {
+      console.error("Wallet not connected");
+      return;
+    }
+
+    if (!CONTRACT_ID) {
+      console.error("Contract ID missing");
+      return;
+    }
+
+    if (!SOROBAN_URL) {
+      console.error("Soroban URL missing");
+      return;
+    }
+
+    if (!operationName) {
+      console.error("Operation name missing");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const server = new SorobanRpc.Server(SOROBAN_URL);
+      const account = await server.getAccount(publicKey);
+      const contract = new Contract(CONTRACT_ID);
+
+      const operation = contract.call(operationName);
+
+      const transaction = new TransactionBuilder(account, {
+        fee: BASE_FEE,
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .setTimeout(TIMEOUT_SEC)
+        .addOperation(operation)
+        .build();
+
+      const simulated = await server.simulateTransaction(transaction);
+      const sim: any = simulated;
+
+      if (sim.error) {
+        console.log("Received error", typeof sim.error);
+        // const parsed = SorobanErrorParser.parse(sim.error, generateErrorMap());
+        // setError(parsed);
+      } else {
+        console.log("cost:", sim.cost);
+        console.log("result:", sim.result);
+        console.log("latest ledger:", sim.latestLedger);
+        console.log(
+          "human readable result:",
+          scValToNative(sim.result?.retval)
+        );
+        const returnValue: any = scValToNative(sim.result?.retval);
+        console.log("Value: ", returnValue);
+      }
+    } catch (error) {
+      console.log("Error loading data.", error);
+      alert("Error loading data. Please check the console for details.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredMarkets = mockMarkets
@@ -294,7 +393,7 @@ const App = () => {
                 Create
               </Link>
               <a
-                href="https://github.com/"
+                href="https://github.com/SentinelFi/SentinelFi"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm hover:text-primary transition-colors"
@@ -371,237 +470,248 @@ const App = () => {
           </div>
 
           {publicKey ? (
-            <>
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="glass">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Total Value Locked
-                    </CardTitle>
-                    <Wallet className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">$2.2k</div>
-                  </CardContent>
-                </Card>
-                <Card className="glass">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Active Markets
-                    </CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">2</div>
-                  </CardContent>
-                </Card>
-                <Card className="glass">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Liquidation Percentage
-                    </CardTitle>
-                    <Percent className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">25%</div>
-                  </CardContent>
-                </Card>
-                <Card className="glass">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Protected Events
-                    </CardTitle>
-                    <Plane className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">5</div>
-                  </CardContent>
-                </Card>
-              </div>
+            loading ? (
+              <Processing />
+            ) : (
+              <>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card className="glass">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Total Value Locked
+                      </CardTitle>
+                      <Wallet className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">$2.2k</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="glass">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Active Markets
+                      </CardTitle>
+                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">2</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="glass">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Liquidation Percentage
+                      </CardTitle>
+                      <Percent className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">25%</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="glass">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Protected Events
+                      </CardTitle>
+                      <Plane className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">5</div>
+                    </CardContent>
+                  </Card>
+                </div>
 
-              {/* Market Type Selection, Sort, Filter, and Search */}
-              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-                <RadioGroup
-                  defaultValue="HEDGE"
-                  onValueChange={(value) =>
-                    setMarketType(value as "HEDGE" | "RISK")
-                  }
-                  className="flex gap-4"
-                >
-                  <p>Side:</p>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="HEDGE" id="hedge" />
-                    <Label htmlFor="hedge">Hedge Markets</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="RISK" id="risk" />
-                    <Label htmlFor="risk">Risk Markets</Label>
-                  </div>
-                </RadioGroup>
+                {/* Market Type Selection, Sort, Filter, and Search */}
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                  <RadioGroup
+                    defaultValue="HEDGE"
+                    onValueChange={(value) =>
+                      setMarketType(value as "HEDGE" | "RISK")
+                    }
+                    className="flex gap-4"
+                  >
+                    <p>Side:</p>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="HEDGE" id="hedge" />
+                      <Label htmlFor="hedge">Hedge Markets</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="RISK" id="risk" />
+                      <Label htmlFor="risk">Risk Markets</Label>
+                    </div>
+                  </RadioGroup>
 
-                <div className="flex gap-2 items-center">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <SortAsc className="h-4 w-4 mr-2" />
-                        Sort
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => setSortBy("date")}>
-                        Date
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortBy("risk")}>
-                        Risk Level
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortBy("return")}>
-                        Possible Return
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="flex gap-2 items-center">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <SortAsc className="h-4 w-4 mr-2" />
+                          Sort
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setSortBy("date")}>
+                          Date
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setSortBy("risk")}>
+                          Risk Level
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setSortBy("return")}>
+                          Possible Return
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Filter className="h-4 w-4 mr-2" />
-                        Filter
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuLabel>Status</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => setStatusFilter("ALL")}>
-                        All
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setStatusFilter("LIVE")}>
-                        Live
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setStatusFilter("LIQUIDATED")}
-                      >
-                        Paused
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setStatusFilter("MATURED")}
-                      >
-                        Ended
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuLabel>Risk Level</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => setRiskFilter("ALL")}>
-                        All
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setRiskFilter("LOW")}>
-                        Low
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setRiskFilter("MEDIUM")}>
-                        Medium
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setRiskFilter("HIGH")}>
-                        High
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuLabel>Asset</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => setAssetFilter("ALL")}>
-                        All
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setAssetFilter("USDC")}>
-                        USDC
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Filter className="h-4 w-4 mr-2" />
+                          Filter
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuLabel>Status</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() => setStatusFilter("ALL")}
+                        >
+                          All
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setStatusFilter("LIVE")}
+                        >
+                          Live
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setStatusFilter("LIQUIDATED")}
+                        >
+                          Paused
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setStatusFilter("MATURED")}
+                        >
+                          Ended
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Risk Level</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => setRiskFilter("ALL")}>
+                          All
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setRiskFilter("LOW")}>
+                          Low
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setRiskFilter("MEDIUM")}
+                        >
+                          Medium
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setRiskFilter("HIGH")}>
+                          High
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Asset</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => setAssetFilter("ALL")}>
+                          All
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setAssetFilter("USDC")}
+                        >
+                          USDC
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
 
-                  <div className="relative w-full md:w-64">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search markets..."
-                      className="pl-8"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                    <div className="relative w-full md:w-64">
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search markets..."
+                        className="pl-8"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Saved Markets */}
-              {savedMarkets.length > 0 && (
-                <Collapsible
-                  open={isSavedMarketsOpen}
-                  onOpenChange={setIsSavedMarketsOpen}
-                >
-                  <div className="flex items-center">
-                    <h3 className="text-xl font-semibold">Saved Markets</h3>
-                    <CollapsibleTrigger asChild className="mx-4">
-                      <Button variant="ghost" size="sm">
-                        {isSavedMarketsOpen ? "Hide" : "Show"}
-                      </Button>
-                    </CollapsibleTrigger>
-                  </div>
-                  <CollapsibleContent className="mt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {savedFilteredMarkets.map((market) => (
-                        <div key={market.id} className="relative group">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => handleSaveMarket(market.id)}
-                            aria-label="Remove from saved"
-                          >
-                            <Plus className="h-4 w-4 text-primary" />
-                          </Button>
-                          <MarketCard market={market} />
-                        </div>
-                      ))}
+                {/* Saved Markets */}
+                {savedMarkets.length > 0 && (
+                  <Collapsible
+                    open={isSavedMarketsOpen}
+                    onOpenChange={setIsSavedMarketsOpen}
+                  >
+                    <div className="flex items-center">
+                      <h3 className="text-xl font-semibold">Saved Markets</h3>
+                      <CollapsibleTrigger asChild className="mx-4">
+                        <Button variant="ghost" size="sm">
+                          {isSavedMarketsOpen ? "Hide" : "Show"}
+                        </Button>
+                      </CollapsibleTrigger>
                     </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
+                    <CollapsibleContent className="mt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {savedFilteredMarkets.map((market) => (
+                          <div key={market.id} className="relative group">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleSaveMarket(market.id)}
+                              aria-label="Remove from saved"
+                            >
+                              <Plus className="h-4 w-4 text-primary" />
+                            </Button>
+                            <MarketCard market={market} />
+                          </div>
+                        ))}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
 
-              {/* Markets Grid */}
-              <div>
-                <h3 className="text-xl font-semibold mb-4">Found Markets</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredMarkets.map((market) => (
-                    <div key={market.id} className="relative group">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleSaveMarket(market.id)}
-                        aria-label={
-                          savedMarkets.includes(market.id)
-                            ? "Remove from saved"
-                            : "Add to saved"
-                        }
-                      >
-                        <Plus
-                          className={`h-4 w-4 ${
+                {/* Markets Grid */}
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Found Markets</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredMarkets.map((market) => (
+                      <div key={market.id} className="relative group">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleSaveMarket(market.id)}
+                          aria-label={
                             savedMarkets.includes(market.id)
-                              ? "text-primary"
-                              : ""
-                          }`}
-                        />
-                      </Button>
-                      <MarketCard market={market} />
-                    </div>
-                  ))}
+                              ? "Remove from saved"
+                              : "Add to saved"
+                          }
+                        >
+                          <Plus
+                            className={`h-4 w-4 ${
+                              savedMarkets.includes(market.id)
+                                ? "text-primary"
+                                : ""
+                            }`}
+                          />
+                        </Button>
+                        <MarketCard market={market} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </>
+              </>
+            )
           ) : (
             <p className="bold">
               Please connect your Freighter wallet to view all details.
             </p>
           )}
 
-          {/* Documentation Section */}
           <Separator className="my-8" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Link
-              href="https://github.com/"
+              href="https://github.com/SentinelFi/SentinelFi"
               target="_blank"
               className="group flex flex-col items-start space-y-2 p-4 rounded-lg hover:bg-secondary/50 transition-colors"
             >
@@ -627,7 +737,7 @@ const App = () => {
             </Link>
 
             <Link
-              href="https://github.com/"
+              href="https://github.com/SentinelFi/SentinelFi"
               target="_blank"
               className="group flex flex-col items-start space-y-2 p-4 rounded-lg hover:bg-secondary/50 transition-colors"
             >

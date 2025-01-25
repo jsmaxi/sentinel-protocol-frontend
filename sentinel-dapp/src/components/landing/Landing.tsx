@@ -40,7 +40,7 @@ const features = [
     icon: Shield,
     title: "Security",
     description:
-      "Robust security protocols ensuring your assets are protected.",
+      "Robust security techniques ensuring your assets are protected.",
   },
   {
     icon: Zap,
@@ -57,7 +57,7 @@ const features = [
 const steps = [
   {
     icon: Download,
-    title: "Install Freighter wallet",
+    title: "Install Freighter Extension",
     description:
       "To interact with the network, install Freighter browser extension.",
   },
@@ -68,7 +68,7 @@ const steps = [
   },
   {
     icon: SearchCheck,
-    title: "Explore Options",
+    title: "Explore Markets",
     description: "Discover a range of hedge and risk options tailored for you.",
   },
 ];
@@ -100,8 +100,8 @@ const useCases = [
 ];
 
 const socialLinks = [
-  { icon: Github, href: "https://github.com/", label: "GitHub" },
-  { icon: Twitter, href: "https://twitter.com/", label: "Twitter" },
+  { icon: Github, href: "https://github.com/SentinelFi/", label: "GitHub" },
+  { icon: Twitter, href: "https://x.com/sentinel_fi/", label: "X" },
 ];
 
 const roadmapItems = [
@@ -156,8 +156,8 @@ const Landing = () => {
     e.preventDefault();
     if (email) {
       toast({
-        title: "Subscribed!",
-        description: "Thank you for subscribing to our newsletter.",
+        title: "Subscribe Simulation Worked",
+        description: "Currently for display purposes only.",
       });
       setEmail("");
     }
@@ -228,7 +228,7 @@ const Landing = () => {
               Community
             </Link>
             <Link
-              href="https://github.com/"
+              href="https://github.com/SentinelFi/SentinelFi"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm hover:text-primary transition-colors"

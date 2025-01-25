@@ -1,0 +1,10 @@
+{
+    "sorobanRpcUrl": "https://soroban-testnet.stellar.org:443",
+    "horizonRpcUrl": "https://horizon-testnet.stellar.org",
+    "defaultTimeoutSeconds": 30,
+    "isTestnet": true,
+    "marketContracts": [
+      "CD...",
+      "CD..."
+    ]
+}

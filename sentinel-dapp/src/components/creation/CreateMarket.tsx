@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import { Wallet, ArrowLeft, ArrowRight } from "lucide-react";
+import { Wallet, ArrowLeft, ArrowRight, Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
 import {
   Select,
@@ -117,8 +118,8 @@ const CreateMarket = () => {
 
     console.log("Form submitted:", data);
     toast({
-      title: "Market Created",
-      description: "Your market has been created successfully.",
+      title: "Market Creation Simulated",
+      description: "Your market creation has been simulated successfully.",
     });
     router.push("/markets");
   };
@@ -155,6 +156,16 @@ const CreateMarket = () => {
             </Button>
           )}
         </div>
+
+        <Alert className="mb-6">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            This page is currently in view mode only. Created markets are not
+            persisted or verified on the blockchain. This is a demonstration of
+            the interface, until a general framework for markets creation will
+            be established.
+          </AlertDescription>
+        </Alert>
 
         <div className="space-y-6">
           <div>
@@ -454,10 +465,9 @@ const CreateMarket = () => {
           )}
         </div>
 
-        {/* Documentation Link */}
         <div className="mt-8 p-4 border rounded-lg">
           <Link
-            href="https://github.com/"
+            href="https://github.com/SentinelFi/SentinelFi"
             target="_blank"
             className="text-primary hover:underline flex items-center gap-2"
           >
@@ -482,7 +492,7 @@ const CreateMarket = () => {
             </div>
             <div className="flex gap-4">
               <Link
-                href="https://github.com/"
+                href="https://github.com/SentinelFi/SentinelFi"
                 target="_blank"
                 className="hover:text-primary"
               >

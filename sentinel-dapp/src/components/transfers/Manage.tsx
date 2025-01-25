@@ -17,11 +17,31 @@ import {
 import { useForm } from "react-hook-form";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
+import {
+  BASE_FEE,
+  Contract,
+  Networks,
+  scValToNative,
+  SorobanRpc,
+  TransactionBuilder,
+} from "@stellar/stellar-sdk";
+import {
+  ParsedSorobanError,
+  SorobanErrorParser,
+} from "../../utils/SorobanErrorParser";
+import Processing from "../shared/Processing";
+
+const SOROBAN_URL = "https://soroban-testnet.stellar.org:443";
+const CONTRACT_ID = "CCXPET3VSGNFRZMGDAQ2WLF5G4CRQN22J7XAQGY5VACJYK4IUGCR2ZOL";
+const NETWORK_PASSPHRASE = Networks.TESTNET;
+const TIMEOUT_SEC = 30;
 
 const Manage = () => {
   const { toast } = useToast();
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [publicKey, setPublicKey] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<ParsedSorobanError | null>(null);
 
   const approveSharesForm = useForm();
   const transferSharesForm = useForm();
@@ -71,6 +91,27 @@ const Manage = () => {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      try {
+        if (isMounted) {
+          const hedge = await getContractData("hedge_address");
+          const risk = await getContractData("risk_address");
+          console.log(hedge, risk);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    if (publicKey) fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, [publicKey]);
+
+  useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 400);
     };
@@ -88,6 +129,71 @@ const Manage = () => {
       title: "Coming Soon",
       description: "This feature is under development.",
     });
+  };
+
+  const getContractData = async (operationName: string) => {
+    if (!publicKey) {
+      console.error("Wallet not connected");
+      return;
+    }
+
+    if (!CONTRACT_ID) {
+      console.error("Contract ID missing");
+      return;
+    }
+
+    if (!SOROBAN_URL) {
+      console.error("Soroban URL missing");
+      return;
+    }
+
+    if (!operationName) {
+      console.error("Operation name missing");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const server = new SorobanRpc.Server(SOROBAN_URL);
+      const account = await server.getAccount(publicKey);
+      const contract = new Contract(CONTRACT_ID);
+
+      const operation = contract.call(operationName);
+
+      const transaction = new TransactionBuilder(account, {
+        fee: BASE_FEE,
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .setTimeout(TIMEOUT_SEC)
+        .addOperation(operation)
+        .build();
+
+      const simulated = await server.simulateTransaction(transaction);
+      const sim: any = simulated;
+
+      if (sim.error) {
+        console.log("Received error", typeof sim.error);
+        // const parsed = SorobanErrorParser.parse(sim.error, generateErrorMap());
+        // setError(parsed);
+      } else {
+        console.log("cost:", sim.cost);
+        console.log("result:", sim.result);
+        console.log("latest ledger:", sim.latestLedger);
+        console.log(
+          "human readable result:",
+          scValToNative(sim.result?.retval)
+        );
+        const returnValue: any = scValToNative(sim.result?.retval);
+        console.log("Value: ", returnValue);
+      }
+    } catch (error) {
+      console.log("Error loading data.", error);
+      alert("Error loading data. Please check the console for details.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -120,20 +226,24 @@ const Manage = () => {
               </p>
             </div>
             {publicKey ? (
-              <span className="text-sm font-medium">
-                Connected:{" "}
-                <Link
-                  href={
-                    `https://stellar.expert/explorer/testnet/account/` +
-                    publicKey
-                  }
-                  target="_blank"
-                  className="hover:underline"
-                >
-                  {publicKey.slice(0, 4)}...
-                  {publicKey.slice(-4)}
-                </Link>
-              </span>
+              loading ? (
+                <Processing />
+              ) : (
+                <span className="text-sm font-medium">
+                  Connected:{" "}
+                  <Link
+                    href={
+                      `https://stellar.expert/explorer/testnet/account/` +
+                      publicKey
+                    }
+                    target="_blank"
+                    className="hover:underline"
+                  >
+                    {publicKey.slice(0, 4)}...
+                    {publicKey.slice(-4)}
+                  </Link>
+                </span>
+              )
             ) : (
               <Button onClick={handleConnectWallet}>
                 <Wallet className="mr-2 h-4 w-4" />
@@ -445,7 +555,7 @@ const Manage = () => {
             </p>
             <div className="flex gap-4">
               <Link
-                href="https://github.com/"
+                href="https://github.com/SentinelFi/SentinelFi"
                 target="_blank"
                 className="text-sm hover:text-primary transition-colors"
               >
