@@ -27,10 +27,10 @@ export function MarketCard({ market }: MarketCardProps) {
     switch (status) {
       case "LIVE":
         return "bg-green-500/20 text-green-500";
-      case "PAUSED":
+      case "LIQUIDATED":
         return "bg-yellow-500/20 text-yellow-500";
-      case "ENDED":
-        return "bg-red-500/20 text-red-500";
+      case "MATURED":
+        return "bg-red-500/20 text-blue-500";
     }
   };
 

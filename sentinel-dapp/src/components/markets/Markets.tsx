@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Wallet,
   Shield,
-  ChartCandlestick,
   TrendingUp,
   Plane,
   Sun,
@@ -20,6 +19,7 @@ import {
   Code,
   Droplet,
   ArrowRight,
+  Percent,
 } from "lucide-react";
 import { MarketCard } from "./MarketCard";
 import { useTheme } from "next-themes";
@@ -92,7 +92,7 @@ const mockMarkets = [
     oracleName: "AgriAPI",
     creatorAddress: "GBBD96385729XJKD",
     vaultAddress: "GBBD96385729XJKE",
-    status: "PAUSED" as const,
+    status: "LIQUIDATED" as const,
     possibleReturn: 18.5,
     totalAssets: 75000,
     totalShares: 750,
@@ -319,7 +319,7 @@ const App = () => {
                 <Wallet className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$0.00</div>
+                <div className="text-2xl font-bold">$2.2k</div>
               </CardContent>
             </Card>
             <Card className="glass">
@@ -327,30 +327,32 @@ const App = () => {
                 <CardTitle className="text-sm font-medium">
                   Active Markets
                 </CardTitle>
-                <ChartCandlestick className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">0</div>
-              </CardContent>
-            </Card>
-            <Card className="glass">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Risk APY</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">0.00%</div>
+                <div className="text-2xl font-bold">2</div>
               </CardContent>
             </Card>
             <Card className="glass">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Protected Flights
+                  Liquidation Percentage
+                </CardTitle>
+                <Percent className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">25%</div>
+              </CardContent>
+            </Card>
+            <Card className="glass">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Protected Events
                 </CardTitle>
                 <Plane className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">0</div>
+                <div className="text-2xl font-bold">5</div>
               </CardContent>
             </Card>
           </div>
@@ -364,6 +366,7 @@ const App = () => {
               }
               className="flex gap-4"
             >
+              <p>Side:</p>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="HEDGE" id="hedge" />
                 <Label htmlFor="hedge">Hedge Markets</Label>
@@ -412,10 +415,12 @@ const App = () => {
                   <DropdownMenuItem onClick={() => setStatusFilter("LIVE")}>
                     Live
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("PAUSED")}>
+                  <DropdownMenuItem
+                    onClick={() => setStatusFilter("LIQUIDATED")}
+                  >
                     Paused
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("ENDED")}>
+                  <DropdownMenuItem onClick={() => setStatusFilter("MATURED")}>
                     Ended
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -492,7 +497,7 @@ const App = () => {
 
           {/* Markets Grid */}
           <div>
-            <h3 className="text-xl font-semibold mb-4">All Markets</h3>
+            <h3 className="text-xl font-semibold mb-4">Found Markets</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredMarkets.map((market) => (
                 <div key={market.id} className="relative group">

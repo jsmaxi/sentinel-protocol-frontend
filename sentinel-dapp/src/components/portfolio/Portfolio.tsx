@@ -54,7 +54,7 @@ const mockMarkets: Market[] = [
     oracleName: "WeatherAPI",
     creatorAddress: "GBBD47385729XJKE",
     vaultAddress: "GBBD47385729XJKF",
-    status: "PAUSED" as const,
+    status: "LIQUIDATED" as const,
     possibleReturn: 15.0,
     totalAssets: 200000,
     totalShares: 2000,
@@ -167,7 +167,7 @@ const Portfolio = () => {
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <Label>Filter by Type</Label>
+              <Label>Filter by Side</Label>
               <RadioGroup
                 value={selectedType}
                 onValueChange={(value) =>
@@ -204,8 +204,8 @@ const Portfolio = () => {
                 <SelectContent>
                   <SelectItem value="ALL">All</SelectItem>
                   <SelectItem value="LIVE">Live</SelectItem>
-                  <SelectItem value="PAUSED">Paused</SelectItem>
-                  <SelectItem value="ENDED">Ended</SelectItem>
+                  <SelectItem value="LIQUiDATED">Liquidated</SelectItem>
+                  <SelectItem value="MATURED">Matured</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -224,7 +224,7 @@ const Portfolio = () => {
                 <SelectContent>
                   <SelectItem value="ALL">All</SelectItem>
                   <SelectItem value="USDC">USDC</SelectItem>
-                  <SelectItem value="USDT">USDT</SelectItem>
+                  <SelectItem value="XLM">XLM</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -7,11 +7,11 @@ export type Market = {
   oracleName: string;
   creatorAddress: string;
   vaultAddress: string;
-  status: 'LIVE' | 'PAUSED' | 'ENDED';
+  status: 'LIVE' | 'LIQUIDATED' | 'MATURED';
   possibleReturn: number;
   totalAssets: number;
   totalShares: number;
-  riskScore: 'LOW' | 'MEDIUM' | 'HIGH';
+  riskScore: 'LOW' | 'MEDIUM' | 'HIGH' | 'UNKNOWN';
   yourShares: number;
   exercising: 'MANUAL' | 'AUTO';
   eventTime: Date;
