@@ -197,7 +197,7 @@ const Landing = () => {
       {/* Navigation */}
       <header>
         <nav className="fixed top-0 w-full z-50 glass">
-          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="container mx-auto px-4 py-4 flex flex-col justify-between items-center custom1:flex-row">
             <Link href="#">
               <div className="flex items-center gap-4">
                 <Shield className="w-8 h-8 text-primary" />
@@ -212,21 +212,33 @@ const Landing = () => {
                 </span>
               </div>
             </Link>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-6 flex-wrap">
               <Link
                 href="#features"
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollTo("features");
+                }}
                 className="text-sm hover:text-primary transition-colors"
               >
                 Features
               </Link>
               <Link
                 href="#how-it-works"
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollTo("how-it-works");
+                }}
                 className="text-sm hover:text-primary transition-colors"
               >
                 How It Works
               </Link>
               <Link
                 href="#community"
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollTo("community");
+                }}
                 className="text-sm hover:text-primary transition-colors"
               >
                 Community

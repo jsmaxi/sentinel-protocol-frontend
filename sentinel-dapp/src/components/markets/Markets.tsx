@@ -343,7 +343,7 @@ const App = () => {
   );
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative overflow-hidden">
       {/* Background Ornaments */}
       <div className="absolute inset-0 bg-grid animate-grid-flow opacity-10" />
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
@@ -351,7 +351,7 @@ const App = () => {
 
       <div className="relative">
         <header className="sticky top-0 z-50 border-b border-border/40 backdrop-blur-sm bg-background/80">
-          <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center flex-wrap">
             <Link href="/" className="flex items-center gap-2">
               <Shield className="w-6 h-6 text-primary" />
               <span className="font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -360,7 +360,7 @@ const App = () => {
               <NetworkInfo />
             </Link>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-wrap">
               <Link
                 href="/portfolio"
                 className="flex items-center gap-4 text-sm hover:text-primary transition-colors"

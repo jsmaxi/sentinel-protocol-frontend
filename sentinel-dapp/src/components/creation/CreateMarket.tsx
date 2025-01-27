@@ -481,7 +481,7 @@ const CreateMarket = () => {
               © {new Date().getFullYear()} Sentinel Protocol. All rights
               reserved.
             </div>
-            <div className="flex gap-4">
+            <div className="flex gap-4 flex-wrap">
               <Link
                 href="https://github.com/SentinelFi/SentinelFi"
                 target="_blank"

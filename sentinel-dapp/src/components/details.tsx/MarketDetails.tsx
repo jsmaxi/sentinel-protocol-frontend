@@ -299,7 +299,7 @@ export default function MarketDetails() {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8 relative">
+    <div className="min-h-screen p-4 md:p-8 relative overflow-hidden">
       {/* <div className="absolute inset-0 bg-grid animate-grid-flow opacity-10" /> */}
 
       <div className="max-w-7xl mx-auto space-y-8 relative">
@@ -489,7 +489,7 @@ export default function MarketDetails() {
               © {new Date().getFullYear()} Sentinel Protocol. All rights
               reserved.
             </div>
-            <div className="flex gap-4">
+            <div className="flex gap-4 flex-wrap">
               <Link
                 href="https://github.com/SentinelFi/SentinelFi"
                 target="_blank"
