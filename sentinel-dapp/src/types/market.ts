@@ -3,7 +3,6 @@ export type Market = {
   name: string;
   description: string;
   underlyingAsset: string;
-  assetIcon: string;
   oracleName: string;
   creatorAddress: string;
   vaultAddress: string;

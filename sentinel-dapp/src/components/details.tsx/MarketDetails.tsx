@@ -28,7 +28,6 @@ const mockMarket = {
   name: "Flight Delay Insurance",
   description: "Insurance against flight delays",
   underlyingAsset: "USDC",
-  assetIcon: "/usdc.png",
   oracleName: "Acurast",
   creatorAddress: "GBBD...",
   status: "LIVE",
