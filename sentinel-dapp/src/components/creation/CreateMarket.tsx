@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import { Wallet, ArrowLeft, ArrowRight, Info } from "lucide-react";
+import { ArrowLeft, ArrowRight, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
 import {
@@ -36,6 +36,8 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
+import ConnectWallet from "../shared/ConnectWallet";
+import NetworkInfo from "../shared/NetworkInfo";
 
 type FormData = {
   name: string;
@@ -135,26 +137,15 @@ const CreateMarket = () => {
             <ArrowLeft className="h-4 w-4" />
             Back to Markets
           </Link>
-          {publicKey ? (
-            <span className="text-sm font-medium">
-              Connected:{" "}
-              <Link
-                href={
-                  `https://stellar.expert/explorer/testnet/account/` + publicKey
-                }
-                target="_blank"
-                className="hover:underline"
-              >
-                {publicKey.slice(0, 4)}...
-                {publicKey.slice(-4)}
-              </Link>
-            </span>
-          ) : (
-            <Button onClick={handleConnectWallet}>
-              <Wallet className="mr-2 h-4 w-4" />
-              Connect Wallet
-            </Button>
-          )}
+          <div className="flex items-center">
+            <ConnectWallet
+              publicKey={publicKey}
+              onClick={handleConnectWallet}
+            />
+            <div className="text-right">
+              <NetworkInfo />
+            </div>
+          </div>
         </div>
 
         <Alert className="mb-6">

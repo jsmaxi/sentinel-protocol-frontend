@@ -57,6 +57,8 @@ import {
   SorobanErrorParser,
 } from "../../utils/SorobanErrorParser";
 import Processing from "../shared/Processing";
+import ConnectWallet from "../shared/ConnectWallet";
+import NetworkInfo from "../shared/NetworkInfo";
 
 const mockMarkets = [
   {
@@ -370,6 +372,7 @@ const App = () => {
               <span className="font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Sentinel
               </span>
+              <NetworkInfo />
             </Link>
 
             <div className="flex items-center gap-4">
@@ -411,27 +414,10 @@ const App = () => {
                   <Moon className="h-4 w-4" />
                 )}
               </button>
-              {publicKey ? (
-                <span className="text-sm font-medium">
-                  Connected:{" "}
-                  <Link
-                    href={
-                      `https://stellar.expert/explorer/testnet/account/` +
-                      publicKey
-                    }
-                    target="_blank"
-                    className="hover:underline"
-                  >
-                    {publicKey.slice(0, 4)}...
-                    {publicKey.slice(-4)}
-                  </Link>
-                </span>
-              ) : (
-                <Button onClick={handleConnectWallet}>
-                  <Wallet className="mr-2 h-4 w-4" />
-                  Connect Wallet
-                </Button>
-              )}
+              <ConnectWallet
+                publicKey={publicKey}
+                onClick={handleConnectWallet}
+              />
             </div>
           </div>
         </header>
@@ -476,7 +462,7 @@ const App = () => {
               <>
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Card className="glass">
+                  <Card className="glass hover:scale-105 transition-transform">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Total Value Locked
@@ -487,7 +473,7 @@ const App = () => {
                       <div className="text-2xl font-bold">$2.2k</div>
                     </CardContent>
                   </Card>
-                  <Card className="glass">
+                  <Card className="glass hover:scale-105 transition-transform">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Active Markets
@@ -498,7 +484,7 @@ const App = () => {
                       <div className="text-2xl font-bold">2</div>
                     </CardContent>
                   </Card>
-                  <Card className="glass">
+                  <Card className="glass hover:scale-105 transition-transform">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Liquidation Percentage
@@ -509,7 +495,7 @@ const App = () => {
                       <div className="text-2xl font-bold">25%</div>
                     </CardContent>
                   </Card>
-                  <Card className="glass">
+                  <Card className="glass hover:scale-105 transition-transform">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Protected Events

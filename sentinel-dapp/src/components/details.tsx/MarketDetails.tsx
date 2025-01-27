@@ -23,6 +23,8 @@ import {
   SorobanErrorParser,
 } from "../../utils/SorobanErrorParser";
 import Processing from "../shared/Processing";
+import ConnectWallet from "../shared/ConnectWallet";
+import NetworkInfo from "../shared/NetworkInfo";
 
 const SOROBAN_URL = "https://soroban-testnet.stellar.org:443";
 const CONTRACT_ID = "CCXPET3VSGNFRZMGDAQ2WLF5G4CRQN22J7XAQGY5VACJYK4IUGCR2ZOL";
@@ -320,26 +322,15 @@ export default function MarketDetails() {
           >
             ← Back to Markets
           </Link>
-          {publicKey ? (
-            <span className="text-sm font-medium">
-              Connected:{" "}
-              <Link
-                href={
-                  `https://stellar.expert/explorer/testnet/account/` + publicKey
-                }
-                target="_blank"
-                className="hover:underline"
-              >
-                {publicKey.slice(0, 4)}...
-                {publicKey.slice(-4)}
-              </Link>
-            </span>
-          ) : (
-            <Button onClick={handleConnectWallet}>
-              <Wallet className="mr-2 h-4 w-4" />
-              Connect Wallet
-            </Button>
-          )}
+          <div className="flex items-center">
+            <ConnectWallet
+              publicKey={publicKey}
+              onClick={handleConnectWallet}
+            />
+            <div className="text-right">
+              <NetworkInfo />
+            </div>
+          </div>{" "}
         </div>
 
         {publicKey ? (

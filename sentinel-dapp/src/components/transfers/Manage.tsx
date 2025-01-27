@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowUp, Wallet } from "lucide-react";
+import { ArrowLeft, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -30,6 +30,8 @@ import {
   SorobanErrorParser,
 } from "../../utils/SorobanErrorParser";
 import Processing from "../shared/Processing";
+import ConnectWallet from "../shared/ConnectWallet";
+import NetworkInfo from "../shared/NetworkInfo";
 
 const SOROBAN_URL = "https://soroban-testnet.stellar.org:443";
 const CONTRACT_ID = "CCXPET3VSGNFRZMGDAQ2WLF5G4CRQN22J7XAQGY5VACJYK4IUGCR2ZOL";
@@ -204,14 +206,24 @@ const Manage = () => {
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
 
       <div className="relative max-w-7xl mx-auto p-4 md:p-8 space-y-8">
-        {/* Back to Markets Link */}
-        <Link
-          href="/markets"
-          className="inline-flex items-center text-sm hover:text-primary transition-colors"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Markets
-        </Link>
+        <div className="flex justify-between items-center mb-8">
+          <Link
+            href="/markets"
+            className="inline-flex items-center text-sm hover:text-primary transition-colors"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Markets
+          </Link>
+          <div className="flex items-center">
+            <ConnectWallet
+              publicKey={publicKey}
+              onClick={handleConnectWallet}
+            />
+            <div className="text-right">
+              <NetworkInfo />
+            </div>
+          </div>
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -225,27 +237,6 @@ const Manage = () => {
                 Approve and transfer your assets and shares
               </p>
             </div>
-            {publicKey ? (
-              <span className="text-sm font-medium">
-                Connected:{" "}
-                <Link
-                  href={
-                    `https://stellar.expert/explorer/testnet/account/` +
-                    publicKey
-                  }
-                  target="_blank"
-                  className="hover:underline"
-                >
-                  {publicKey.slice(0, 4)}...
-                  {publicKey.slice(-4)}
-                </Link>
-              </span>
-            ) : (
-              <Button onClick={handleConnectWallet}>
-                <Wallet className="mr-2 h-4 w-4" />
-                Connect Wallet
-              </Button>
-            )}
           </div>
         </motion.div>
 

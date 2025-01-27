@@ -203,7 +203,10 @@ const Landing = () => {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Sentinel
               </h1>
-              <span className="glass px-3 py-1 text-sm rounded-full">
+              <span
+                className="glass px-3 py-1 text-sm rounded-full"
+                title="Current application version"
+              >
                 Open Beta
               </span>
             </div>
@@ -261,9 +264,7 @@ const Landing = () => {
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 z-10">
         <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-4 mb-8">
-            {/* Empty gap, can add logo or something here */}
-          </div>
+          <div className="flex items-center justify-center gap-4 mb-8"></div>
           <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-fade-in">
             Sentinel Finance
             <br />
@@ -402,7 +403,7 @@ const Landing = () => {
             {roadmapItems.map((item) => (
               <div
                 key={item.quarter}
-                className="glass p-6 rounded-lg border border-primary/10"
+                className="glass p-6 rounded-lg border border-primary/10 hover:scale-105 transition-transform"
               >
                 <div className="flex items-center gap-2 mb-4">
                   <CalendarRange className="w-5 h-5 text-primary" />
