@@ -38,6 +38,7 @@ import { useEffect, useState } from "react";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
+import ContactEmail from "../shared/ContactEmail";
 
 type FormData = {
   name: string;
@@ -495,9 +496,9 @@ const CreateMarket = () => {
               <Link href="/terms" className="hover:text-primary">
                 Terms of Service
               </Link>
-              <Link href="/" className="hover:text-primary">
-                Contact
-              </Link>
+              <div className="hover:text-primary">
+                <ContactEmail />
+              </div>
             </div>
           </div>
         </div>

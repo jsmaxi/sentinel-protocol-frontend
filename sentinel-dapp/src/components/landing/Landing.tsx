@@ -34,6 +34,7 @@ import { useTheme } from "next-themes";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
+import ContactEmail from "../shared/ContactEmail";
 
 const features = [
   {
@@ -520,12 +521,9 @@ const Landing = () => {
               >
                 Terms of Service
               </Link>
-              <Link
-                href="#"
-                className="text-sm hover:text-primary transition-colors"
-              >
-                Contact
-              </Link>
+              <div className="text-sm hover:text-primary transition-colors">
+                <ContactEmail />
+              </div>
             </div>
           </div>
         </div>

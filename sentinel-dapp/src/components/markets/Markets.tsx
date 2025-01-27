@@ -53,6 +53,7 @@ import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
 import config from "../../config/markets.json";
 import { simulateTx } from "@/actions/serverActions";
+import ContactEmail from "../shared/ContactEmail";
 
 const mockMarkets = [
   {
@@ -750,12 +751,9 @@ const App = () => {
                 >
                   Terms of Service
                 </Link>
-                <Link
-                  href="/contact"
-                  className="text-sm hover:text-primary transition-colors"
-                >
-                  Contact
-                </Link>
+                <div className="text-sm hover:text-primary transition-colors">
+                  <ContactEmail />
+                </div>
               </div>
             </div>
           </footer>

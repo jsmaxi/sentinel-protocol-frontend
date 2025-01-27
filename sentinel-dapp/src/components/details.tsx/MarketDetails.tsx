@@ -19,6 +19,7 @@ import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
 import config from "../../config/markets.json";
 import { simulateTx } from "@/actions/serverActions";
+import ContactEmail from "../shared/ContactEmail";
 
 const CONTRACT_ID = config.marketContracts[0];
 
@@ -503,9 +504,9 @@ export default function MarketDetails() {
               <Link href="/terms" className="hover:text-primary">
                 Terms of Service
               </Link>
-              <Link href="#" className="hover:text-primary">
-                Contact
-              </Link>
+              <div className="hover:text-primary">
+                <ContactEmail />
+              </div>
             </div>
           </div>
         </div>
