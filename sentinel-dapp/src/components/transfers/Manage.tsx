@@ -18,25 +18,16 @@ import { useForm } from "react-hook-form";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
 import {
-  BASE_FEE,
-  Contract,
-  Networks,
-  scValToNative,
-  SorobanRpc,
-  TransactionBuilder,
-} from "@stellar/stellar-sdk";
-import {
   ParsedSorobanError,
   SorobanErrorParser,
 } from "../../utils/SorobanErrorParser";
 import Processing from "../shared/Processing";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
+import config from "../../config/markets.json";
+import { simulateTx } from "@/actions/serverActions";
 
-const SOROBAN_URL = "https://soroban-testnet.stellar.org:443";
-const CONTRACT_ID = "CCXPET3VSGNFRZMGDAQ2WLF5G4CRQN22J7XAQGY5VACJYK4IUGCR2ZOL";
-const NETWORK_PASSPHRASE = Networks.TESTNET;
-const TIMEOUT_SEC = 30;
+const CONTRACT_ID = config.marketContracts[0];
 
 const Manage = () => {
   const { toast } = useToast();
@@ -144,11 +135,6 @@ const Manage = () => {
       return;
     }
 
-    if (!SOROBAN_URL) {
-      console.error("Soroban URL missing");
-      return;
-    }
-
     if (!operationName) {
       console.error("Operation name missing");
       return;
@@ -158,38 +144,41 @@ const Manage = () => {
       setLoading(true);
       setError(null);
 
-      const server = new SorobanRpc.Server(SOROBAN_URL);
-      const account = await server.getAccount(publicKey);
-      const contract = new Contract(CONTRACT_ID);
+      const result = await simulateTx(publicKey, CONTRACT_ID, operationName);
+      console.log("TX", result);
 
-      const operation = contract.call(operationName);
+      // const server = new SorobanRpc.Server(SOROBAN_URL);
+      // const account = await server.getAccount(publicKey);
+      // const contract = new Contract(CONTRACT_ID);
 
-      const transaction = new TransactionBuilder(account, {
-        fee: BASE_FEE,
-        networkPassphrase: NETWORK_PASSPHRASE,
-      })
-        .setTimeout(TIMEOUT_SEC)
-        .addOperation(operation)
-        .build();
+      // const operation = contract.call(operationName);
 
-      const simulated = await server.simulateTransaction(transaction);
-      const sim: any = simulated;
+      // const transaction = new TransactionBuilder(account, {
+      //   fee: BASE_FEE,
+      //   networkPassphrase: NETWORK_PASSPHRASE,
+      // })
+      //   .setTimeout(TIMEOUT_SEC)
+      //   .addOperation(operation)
+      //   .build();
 
-      if (sim.error) {
-        console.log("Received error", typeof sim.error);
-        // const parsed = SorobanErrorParser.parse(sim.error, generateErrorMap());
-        // setError(parsed);
-      } else {
-        console.log("cost:", sim.cost);
-        console.log("result:", sim.result);
-        console.log("latest ledger:", sim.latestLedger);
-        console.log(
-          "human readable result:",
-          scValToNative(sim.result?.retval)
-        );
-        const returnValue: any = scValToNative(sim.result?.retval);
-        console.log("Value: ", returnValue);
-      }
+      // const simulated = await server.simulateTransaction(transaction);
+      // const sim: any = simulated;
+
+      // if (sim.error) {
+      //   console.log("Received error", typeof sim.error);
+      //   // const parsed = SorobanErrorParser.parse(sim.error, generateErrorMap());
+      //   // setError(parsed);
+      // } else {
+      //   console.log("cost:", sim.cost);
+      //   console.log("result:", sim.result);
+      //   console.log("latest ledger:", sim.latestLedger);
+      //   console.log(
+      //     "human readable result:",
+      //     scValToNative(sim.result?.retval)
+      //   );
+      //   const returnValue: any = scValToNative(sim.result?.retval);
+      //   console.log("Value: ", returnValue);
+      // }
     } catch (error) {
       console.log("Error loading data.", error);
       alert("Error loading data. Please check the console for details.");
