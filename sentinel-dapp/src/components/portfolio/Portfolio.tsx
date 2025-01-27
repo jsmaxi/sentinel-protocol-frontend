@@ -190,39 +190,6 @@ const Portfolio = () => {
 
       const result = await simulateTx(publicKey, CONTRACT_ID, operationName);
       console.log("TX", result);
-
-      // const server = new Server(SOROBAN_URL);
-      // const account = await server.getAccount(publicKey);
-      // const contract = new Contract(CONTRACT_ID);
-
-      // const operation = contract.call(operationName);
-
-      // const transaction = new TransactionBuilder(account, {
-      //   fee: BASE_FEE,
-      //   networkPassphrase: NETWORK_PASSPHRASE,
-      // })
-      //   .setTimeout(TIMEOUT_SEC)
-      //   .addOperation(operation)
-      //   .build();
-
-      // const simulated = await server.simulateTransaction(transaction);
-      // const sim: any = simulated;
-
-      // if (sim.error) {
-      //   console.log("Received error", typeof sim.error);
-      //   // const parsed = SorobanErrorParser.parse(sim.error, generateErrorMap());
-      //   // setError(parsed);
-      // } else {
-      //   console.log("cost:", sim.cost);
-      //   console.log("result:", sim.result);
-      //   console.log("latest ledger:", sim.latestLedger);
-      //   console.log(
-      //     "human readable result:",
-      //     scValToNative(sim.result?.retval)
-      //   );
-      //   const returnValue: any = scValToNative(sim.result?.retval);
-      //   console.log("Value: ", returnValue);
-      // }
     } catch (error) {
       console.log("Error loading data.", error);
       alert("Error loading data. Please check the console for details.");

@@ -41,7 +41,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useState, useEffect } from "react";
-import { Market } from "@/types/market";
+import { Market, MarketKind, MarketX } from "@/types/market";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
 import {
@@ -54,6 +54,7 @@ import NetworkInfo from "../shared/NetworkInfo";
 import config from "../../config/markets.json";
 import { simulateTx } from "@/actions/serverActions";
 import ContactEmail from "../shared/ContactEmail";
+import { DateTimeConverter } from "@/utils/DateTimeConverter";
 
 const mockMarkets = [
   {
@@ -130,8 +131,6 @@ const mockMarkets = [
   },
 ];
 
-const CONTRACT_ID = config.marketContracts[0];
-
 const App = () => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
@@ -200,9 +199,76 @@ const App = () => {
     const fetchData = async () => {
       try {
         if (isMounted) {
-          const hedge = await getContractData("hedge_address");
-          const risk = await getContractData("risk_address");
-          console.log(hedge, risk);
+          const CONTRACT_ID = config.marketContracts[0];
+
+          const id = Math.random().toString(36);
+          const name = (await getContractData("name", CONTRACT_ID)) as string;
+          const desc = (await getContractData(
+            "description",
+            CONTRACT_ID
+          )) as string;
+          const vault = (await getContractData(
+            "hedge_address",
+            CONTRACT_ID
+          )) as string;
+          const asset = (await getContractData(
+            "asset_symbol",
+            vault
+          )) as string;
+          const oracle = (await getContractData(
+            "oracle_address",
+            CONTRACT_ID
+          )) as string;
+          const admin = (await getContractData(
+            "administrator_address",
+            vault
+          )) as string;
+          const status = (await getContractData(
+            "status",
+            CONTRACT_ID
+          )) as number;
+          const riskScore = (await getContractData(
+            "risk_score",
+            CONTRACT_ID
+          )) as number;
+          const eventTime = (await getContractData(
+            "expected_time_of_event",
+            CONTRACT_ID
+          )) as bigint;
+          const exercising = (await getContractData(
+            "exercising",
+            CONTRACT_ID
+          )) as string;
+          const assets = (await getContractData(
+            "total_assets",
+            vault
+          )) as bigint;
+          const shares = (await getContractData(
+            "total_shares",
+            vault
+          )) as bigint;
+          const yourShares = BigInt(0); // TODO
+
+          const market: MarketX = {
+            id: id,
+            name: name,
+            description: desc,
+            underlyingAsset: asset,
+            oracleName: oracle,
+            creatorAddress: admin,
+            vaultAddress: vault,
+            status: status,
+            possibleReturn: 0,
+            totalAssets: shares,
+            totalShares: assets,
+            riskScore: riskScore,
+            yourShares: yourShares,
+            exercising: exercising,
+            eventTime: DateTimeConverter.convertUnixSecondsToDate(eventTime),
+            type: MarketKind.HEDGE,
+          };
+
+          console.log("MARKET", market);
         }
       } catch (error) {
         console.error(error);
@@ -246,64 +312,35 @@ const App = () => {
     });
   };
 
-  const getContractData = async (operationName: string) => {
-    if (!publicKey) {
-      console.error("Wallet not connected");
-      return;
-    }
-
-    if (!CONTRACT_ID) {
-      console.error("Contract ID missing");
-      return;
-    }
-
-    if (!operationName) {
-      console.error("Operation name missing");
-      return;
-    }
-
+  const getContractData = async (
+    operationName: string,
+    contractId: string
+  ): Promise<string | number | bigint> => {
     try {
+      if (!publicKey) {
+        console.error("Wallet not connected");
+        throw "Wallet not connected";
+      }
+
+      if (!contractId) {
+        console.error("Contract ID missing");
+        throw "Contract ID missing";
+      }
+
+      if (!operationName) {
+        console.error("Operation name missing");
+        throw "Operation name missing";
+      }
+
       setLoading(true);
       setError(null);
 
-      const result = await simulateTx(publicKey, CONTRACT_ID, operationName);
-      console.log("TX", result);
-
-      // const server = new SorobanRpc.Server(SOROBAN_URL);
-      // const account = await server.getAccount(publicKey);
-      // const contract = new Contract(CONTRACT_ID);
-
-      // const operation = contract.call(operationName);
-
-      // const transaction = new TransactionBuilder(account, {
-      //   fee: BASE_FEE,
-      //   networkPassphrase: NETWORK_PASSPHRASE,
-      // })
-      //   .setTimeout(TIMEOUT_SEC)
-      //   .addOperation(operation)
-      //   .build();
-
-      // const simulated = await server.simulateTransaction(transaction);
-      // const sim: any = simulated;
-
-      // if (sim.error) {
-      //   console.log("Received error", typeof sim.error);
-      //   // const parsed = SorobanErrorParser.parse(sim.error, generateErrorMap());
-      //   // setError(parsed);
-      // } else {
-      //   console.log("cost:", sim.cost);
-      //   console.log("result:", sim.result);
-      //   console.log("latest ledger:", sim.latestLedger);
-      //   console.log(
-      //     "human readable result:",
-      //     scValToNative(sim.result?.retval)
-      //   );
-      //   const returnValue: any = scValToNative(sim.result?.retval);
-      //   console.log("Value: ", returnValue);
-      // }
+      return await simulateTx(publicKey, contractId, operationName);
     } catch (error) {
       console.log("Error loading data.", error);
       alert("Error loading data. Please check the console for details.");
+      // set error
+      throw error;
     } finally {
       setLoading(false);
     }

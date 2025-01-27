@@ -4,10 +4,11 @@ import {
   BASE_FEE,
   Contract,
   Networks,
+  scValToNative,
   Transaction,
   TransactionBuilder,
 } from "@stellar/stellar-sdk";
-import { Server } from "@stellar/stellar-sdk/rpc";
+import { Api, Server } from "@stellar/stellar-sdk/rpc";
 import config from "../config/markets.json";
 
 const SERVER = new Server(config.sorobanRpcUrl);
@@ -43,7 +44,7 @@ export async function prepareTx(
   return preparedTransaction.toEnvelope().toXDR("base64");
 }
 
-export async function sendTx(signedTransaction: string) {
+export async function sendTx(signedTransaction: string): Promise<void> {
   console.log("[server] Send transaction");
 
   const transaction = TransactionBuilder.fromXDR(
@@ -86,14 +87,16 @@ export async function sendTx(signedTransaction: string) {
     ?.returnValue();
 
   console.log("[server] Return value:", returnValue);
+
+  // Ignore the return value after transaction is sent
 }
 
 export async function simulateTx(
   publicKey: string,
   contractId: string,
   operation: string
-) {
-  console.log("[server] Simulate transaction");
+): Promise<string | number | bigint> {
+  // console.log("[server] Simulate transaction");
 
   const account = await SERVER.getAccount(publicKey);
 
@@ -107,9 +110,34 @@ export async function simulateTx(
     .addOperation(contract.call(operation))
     .build();
 
-  console.log("[server] Simulating transaction...");
+  // console.log("[server] Simulating transaction...");
   const simulatedTransaction = await SERVER.simulateTransaction(transaction);
-  console.log(simulatedTransaction);
+  // console.log(simulatedTransaction);
 
   if (!simulatedTransaction) throw "Empty simulate transaction response.";
+
+  return handleSimulationResponse(simulatedTransaction);
+}
+
+function handleSimulationResponse(
+  response: Api.SimulateTransactionResponse
+): string | number | bigint {
+  if (Api.isSimulationSuccess(response)) {
+    if (response.result?.retval) {
+      // console.log(
+      //   scValToNative(response.result.retval),
+      //   " :: ",
+      //   typeof scValToNative(response.result.retval)
+      // );
+      return scValToNative(response.result.retval);
+    } else {
+      throw "Return value not set";
+    }
+  } else if (Api.isSimulationError(response)) {
+    console.log(response.error);
+    throw response.error;
+  } else {
+    console.log(response);
+    throw "Unexpected simulation response";
+  }
 }
