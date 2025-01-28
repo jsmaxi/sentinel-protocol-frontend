@@ -1,3 +1,8 @@
+export enum MarketType {
+  HEDGE = 0,
+  RISK = 1,
+}
+
 export enum MarketStatus {
   LIVE = 0,
   MATURE = 1,
@@ -13,31 +18,13 @@ export enum MarketRiskScore {
   UNKNOWN = 3,
 }
 
-export enum MarketKind {
-  HEDGE = 0,
-  RISK = 1,
-}
+export type MarketTypeString = keyof typeof MarketType;
+
+export type MarketStatusString = keyof typeof MarketStatus;
+
+export type MarketRiskScoreString = keyof typeof MarketRiskScore;
 
 export type Market = {
-  id: string;
-  name: string;
-  description: string;
-  underlyingAsset: string;
-  oracleName: string;
-  creatorAddress: string;
-  vaultAddress: string;
-  status: 'LIVE' | 'LIQUIDATED' | 'MATURED';
-  possibleReturn: number;
-  totalAssets: number;
-  totalShares: number;
-  riskScore: 'LOW' | 'MEDIUM' | 'HIGH' | 'UNKNOWN';
-  yourShares: number;
-  exercising: 'MANUAL' | 'AUTO';
-  eventTime: Date;
-  type: 'HEDGE' | 'RISK';
-};
-
-export type MarketX = {
   id: string;
   name: string;
   description: string;
@@ -53,5 +40,5 @@ export type MarketX = {
   yourShares: bigint;
   exercising: string;
   eventTime: Date;
-  type: MarketKind;
+  type: MarketType;
 };

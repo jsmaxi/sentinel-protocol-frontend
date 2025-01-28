@@ -41,7 +41,13 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useState, useEffect } from "react";
-import { Market, MarketKind, MarketX } from "@/types/market";
+import {
+  MarketRiskScore,
+  MarketStatus,
+  MarketType,
+  MarketTypeString,
+  Market,
+} from "@/types/market";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
 import {
@@ -56,85 +62,87 @@ import { simulateTx } from "@/actions/serverActions";
 import ContactEmail from "../shared/ContactEmail";
 import { DateTimeConverter } from "@/utils/DateTimeConverter";
 
-const mockMarkets = [
-  {
-    id: "1",
-    name: "Flight Delay Insurance",
-    description: "Insurance against flight delays for major airlines",
-    underlyingAsset: "USDC",
-    oracleName: "FlightAPI",
-    creatorAddress: "GBBD47385729XJKD",
-    vaultAddress: "GBBD47385729XJKE",
-    status: "LIVE" as const,
-    possibleReturn: 12.5,
-    totalAssets: 100000,
-    totalShares: 1000,
-    riskScore: "LOW" as const,
-    yourShares: 10,
-    exercising: "AUTO" as const,
-    eventTime: new Date(),
-    type: "HEDGE" as const,
-  },
-  {
-    id: "2",
-    name: "Weather Insurance",
-    description: "Protection against adverse weather conditions",
-    underlyingAsset: "USDC",
-    oracleName: "WeatherAPI",
-    creatorAddress: "GBBD85739275LKJD",
-    vaultAddress: "GBBD85739275LKJE",
-    status: "LIVE" as const,
-    possibleReturn: 15.0,
-    totalAssets: 50000,
-    totalShares: 500,
-    riskScore: "MEDIUM" as const,
-    yourShares: 5,
-    exercising: "MANUAL" as const,
-    eventTime: new Date(),
-    type: "RISK" as const,
-  },
-  {
-    id: "3",
-    name: "Crop Yield Protection",
-    description: "Insurance for agricultural yield variations",
-    underlyingAsset: "USDC",
-    oracleName: "AgriAPI",
-    creatorAddress: "GBBD96385729XJKD",
-    vaultAddress: "GBBD96385729XJKE",
-    status: "LIQUIDATED" as const,
-    possibleReturn: 18.5,
-    totalAssets: 75000,
-    totalShares: 750,
-    riskScore: "HIGH" as const,
-    yourShares: 0,
-    exercising: "MANUAL" as const,
-    eventTime: new Date(),
-    type: "HEDGE" as const,
-  },
-  {
-    id: "4",
-    name: "Earthquake Coverage",
-    description: "Protection against seismic events",
-    underlyingAsset: "USDT",
-    oracleName: "SeismicAPI",
-    creatorAddress: "GBBD12385729XJKD",
-    vaultAddress: "GBBD12385729XJKE",
-    status: "LIVE" as const,
-    possibleReturn: 22.0,
-    totalAssets: 200000,
-    totalShares: 2000,
-    riskScore: "HIGH" as const,
-    yourShares: 15,
-    exercising: "AUTO" as const,
-    eventTime: new Date(),
-    type: "RISK" as const,
-  },
-];
+// const mockMarkets = [
+//   {
+//     id: "1",
+//     name: "Flight Delay Insurance",
+//     description: "Insurance against flight delays for major airlines",
+//     underlyingAsset: "USDC",
+//     oracleName: "FlightAPI",
+//     creatorAddress: "GBBD47385729XJKD",
+//     vaultAddress: "GBBD47385729XJKE",
+//     status: "LIVE" as const,
+//     possibleReturn: 12.5,
+//     totalAssets: 100000,
+//     totalShares: 1000,
+//     riskScore: "LOW" as const,
+//     yourShares: 10,
+//     exercising: "AUTO" as const,
+//     eventTime: new Date(),
+//     type: "HEDGE" as const,
+//   },
+//   {
+//     id: "2",
+//     name: "Weather Insurance",
+//     description: "Protection against adverse weather conditions",
+//     underlyingAsset: "USDC",
+//     oracleName: "WeatherAPI",
+//     creatorAddress: "GBBD85739275LKJD",
+//     vaultAddress: "GBBD85739275LKJE",
+//     status: "LIVE" as const,
+//     possibleReturn: 15.0,
+//     totalAssets: 50000,
+//     totalShares: 500,
+//     riskScore: "MEDIUM" as const,
+//     yourShares: 5,
+//     exercising: "MANUAL" as const,
+//     eventTime: new Date(),
+//     type: "RISK" as const,
+//   },
+//   {
+//     id: "3",
+//     name: "Crop Yield Protection",
+//     description: "Insurance for agricultural yield variations",
+//     underlyingAsset: "USDC",
+//     oracleName: "AgriAPI",
+//     creatorAddress: "GBBD96385729XJKD",
+//     vaultAddress: "GBBD96385729XJKE",
+//     status: "LIQUIDATED" as const,
+//     possibleReturn: 18.5,
+//     totalAssets: 75000,
+//     totalShares: 750,
+//     riskScore: "HIGH" as const,
+//     yourShares: 0,
+//     exercising: "MANUAL" as const,
+//     eventTime: new Date(),
+//     type: "HEDGE" as const,
+//   },
+//   {
+//     id: "4",
+//     name: "Earthquake Coverage",
+//     description: "Protection against seismic events",
+//     underlyingAsset: "USDT",
+//     oracleName: "SeismicAPI",
+//     creatorAddress: "GBBD12385729XJKD",
+//     vaultAddress: "GBBD12385729XJKE",
+//     status: "LIVE" as const,
+//     possibleReturn: 22.0,
+//     totalAssets: 200000,
+//     totalShares: 2000,
+//     riskScore: "HIGH" as const,
+//     yourShares: 15,
+//     exercising: "AUTO" as const,
+//     eventTime: new Date(),
+//     type: "RISK" as const,
+//   },
+// ];
+
+const markets: Market[] = [];
 
 const App = () => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
-  const [marketType, setMarketType] = useState<"HEDGE" | "RISK">("HEDGE");
+  const [marketType, setMarketType] = useState<MarketType>(MarketType.HEDGE);
   const [searchQuery, setSearchQuery] = useState("");
   const [savedMarkets, setSavedMarkets] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<"date" | "risk" | "return">("date");
@@ -249,7 +257,7 @@ const App = () => {
           )) as bigint;
           const yourShares = BigInt(0); // TODO
 
-          const market: MarketX = {
+          const market: Market = {
             id: id,
             name: name,
             description: desc,
@@ -265,10 +273,12 @@ const App = () => {
             yourShares: yourShares,
             exercising: exercising,
             eventTime: DateTimeConverter.convertUnixSecondsToDate(eventTime),
-            type: MarketKind.HEDGE,
+            type: MarketType.HEDGE,
           };
 
           console.log("MARKET", market);
+
+          markets.push(market);
         }
       } catch (error) {
         console.error(error);
@@ -346,7 +356,7 @@ const App = () => {
     }
   };
 
-  const filteredMarkets = mockMarkets
+  const filteredMarkets = markets
     .filter((market) => market.type === marketType)
     .filter(
       (market) =>
@@ -367,8 +377,8 @@ const App = () => {
         case "date":
           return b.eventTime.getTime() - a.eventTime.getTime();
         case "risk":
-          const riskOrder = { LOW: 0, MEDIUM: 1, HIGH: 2 };
-          return riskOrder[a.riskScore] - riskOrder[b.riskScore];
+          // const riskOrder = { LOW: 0, MEDIUM: 1, HIGH: 2, UNKNOWN: 3 };
+          return a.riskScore - b.riskScore;
         case "return":
           return b.possibleReturn - a.possibleReturn;
         default:
@@ -535,8 +545,8 @@ const App = () => {
                 <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
                   <RadioGroup
                     defaultValue="HEDGE"
-                    onValueChange={(value) =>
-                      setMarketType(value as "HEDGE" | "RISK")
+                    onValueChange={(value: string) =>
+                      setMarketType(MarketType[value as MarketTypeString])
                     }
                     className="flex gap-4"
                   >
@@ -589,34 +599,40 @@ const App = () => {
                           All
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => setStatusFilter("LIVE")}
+                          onClick={() => setStatusFilter(MarketStatus.LIVE)}
                         >
                           Live
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => setStatusFilter("LIQUIDATED")}
+                          onClick={() =>
+                            setStatusFilter(MarketStatus.LIQUIDATED)
+                          }
                         >
-                          Paused
+                          Liquidated
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => setStatusFilter("MATURED")}
+                          onClick={() => setStatusFilter(MarketStatus.MATURED)}
                         >
-                          Ended
+                          Matured
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel>Risk Level</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => setRiskFilter("ALL")}>
                           All
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setRiskFilter("LOW")}>
+                        <DropdownMenuItem
+                          onClick={() => setRiskFilter(MarketRiskScore.LOW)}
+                        >
                           Low
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => setRiskFilter("MEDIUM")}
+                          onClick={() => setRiskFilter(MarketRiskScore.MEDIUM)}
                         >
                           Medium
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setRiskFilter("HIGH")}>
+                        <DropdownMenuItem
+                          onClick={() => setRiskFilter(MarketRiskScore.HIGH)}
+                        >
                           High
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
