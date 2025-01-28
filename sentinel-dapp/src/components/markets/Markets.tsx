@@ -62,80 +62,90 @@ import { simulateTx } from "@/actions/serverActions";
 import ContactEmail from "../shared/ContactEmail";
 import { DateTimeConverter } from "@/utils/DateTimeConverter";
 
-// const mockMarkets = [
-//   {
-//     id: "1",
-//     name: "Flight Delay Insurance",
-//     description: "Insurance against flight delays for major airlines",
-//     underlyingAsset: "USDC",
-//     oracleName: "FlightAPI",
-//     creatorAddress: "GBBD47385729XJKD",
-//     vaultAddress: "GBBD47385729XJKE",
-//     status: "LIVE" as const,
-//     possibleReturn: 12.5,
-//     totalAssets: 100000,
-//     totalShares: 1000,
-//     riskScore: "LOW" as const,
-//     yourShares: 10,
-//     exercising: "AUTO" as const,
-//     eventTime: new Date(),
-//     type: "HEDGE" as const,
-//   },
-//   {
-//     id: "2",
-//     name: "Weather Insurance",
-//     description: "Protection against adverse weather conditions",
-//     underlyingAsset: "USDC",
-//     oracleName: "WeatherAPI",
-//     creatorAddress: "GBBD85739275LKJD",
-//     vaultAddress: "GBBD85739275LKJE",
-//     status: "LIVE" as const,
-//     possibleReturn: 15.0,
-//     totalAssets: 50000,
-//     totalShares: 500,
-//     riskScore: "MEDIUM" as const,
-//     yourShares: 5,
-//     exercising: "MANUAL" as const,
-//     eventTime: new Date(),
-//     type: "RISK" as const,
-//   },
-//   {
-//     id: "3",
-//     name: "Crop Yield Protection",
-//     description: "Insurance for agricultural yield variations",
-//     underlyingAsset: "USDC",
-//     oracleName: "AgriAPI",
-//     creatorAddress: "GBBD96385729XJKD",
-//     vaultAddress: "GBBD96385729XJKE",
-//     status: "LIQUIDATED" as const,
-//     possibleReturn: 18.5,
-//     totalAssets: 75000,
-//     totalShares: 750,
-//     riskScore: "HIGH" as const,
-//     yourShares: 0,
-//     exercising: "MANUAL" as const,
-//     eventTime: new Date(),
-//     type: "HEDGE" as const,
-//   },
-//   {
-//     id: "4",
-//     name: "Earthquake Coverage",
-//     description: "Protection against seismic events",
-//     underlyingAsset: "USDT",
-//     oracleName: "SeismicAPI",
-//     creatorAddress: "GBBD12385729XJKD",
-//     vaultAddress: "GBBD12385729XJKE",
-//     status: "LIVE" as const,
-//     possibleReturn: 22.0,
-//     totalAssets: 200000,
-//     totalShares: 2000,
-//     riskScore: "HIGH" as const,
-//     yourShares: 15,
-//     exercising: "AUTO" as const,
-//     eventTime: new Date(),
-//     type: "RISK" as const,
-//   },
-// ];
+/*
+const mockMarkets: Market[] = [
+  {
+    id: "1",
+    name: "Flight Delay Insurance",
+    description: "Insurance against flight delays for major airlines",
+    assetAddress: "GBBD47385729XJKE",
+    assetSymbol: "USDC",
+    oracleName: "FlightAPI",
+    oracleAddress: "GBBD47385729XJKE",
+    creatorAddress: "GBBD47385729XJKD",
+    vaultAddress: "GBBD47385729XJKE",
+    status: MarketStatus.LIVE,
+    possibleReturn: 12.5,
+    totalAssets: BigInt(100000),
+    totalShares: BigInt(1000),
+    riskScore: MarketRiskScore.LOW,
+    yourShares: BigInt(10),
+    exercising: "Automatic",
+    eventTime: new Date(),
+    type: MarketType.HEDGE,
+  },
+  {
+    id: "2",
+    name: "Weather Insurance",
+    description: "Protection against adverse weather conditions",
+    assetAddress: "GBBD47385729XJKE",
+    assetSymbol: "USDC",
+    oracleName: "WeatherAPI",
+    oracleAddress: "GBBD47385729XJKE",
+    creatorAddress: "GBBD85739275LKJD",
+    vaultAddress: "GBBD85739275LKJE",
+    status: MarketStatus.LIVE,
+    possibleReturn: 15.0,
+    totalAssets: BigInt(50000),
+    totalShares: BigInt(500),
+    riskScore: MarketRiskScore.MEDIUM,
+    yourShares: BigInt(5),
+    exercising: "Automatic",
+    eventTime: new Date(),
+    type: MarketType.RISK,
+  },
+  {
+    id: "3",
+    name: "Crop Yield Protection",
+    description: "Insurance for agricultural yield variations",
+    assetAddress: "GBBD47385729XJKE",
+    assetSymbol: "USDC",
+    oracleName: "AgriAPI",
+    oracleAddress: "GBBD47385729XJKE",
+    creatorAddress: "GBBD96385729XJKD",
+    vaultAddress: "GBBD96385729XJKE",
+    status: MarketStatus.LIQUIDATED,
+    possibleReturn: 18.5,
+    totalAssets: BigInt(75000),
+    totalShares: BigInt(750),
+    riskScore: MarketRiskScore.HIGH,
+    yourShares: BigInt(0),
+    exercising: "Automatic",
+    eventTime: new Date(),
+    type: MarketType.HEDGE,
+  },
+  {
+    id: "4",
+    name: "Earthquake Coverage",
+    description: "Protection against seismic events",
+    assetAddress: "GBBD47385729XJKE",
+    assetSymbol: "USDC",
+    oracleName: "SeismicAPI",
+    oracleAddress: "GBBD47385729XJKE",
+    creatorAddress: "GBBD12385729XJKD",
+    vaultAddress: "GBBD12385729XJKE",
+    status: MarketStatus.LIVE,
+    possibleReturn: 22.0,
+    totalAssets: BigInt(200000),
+    totalShares: BigInt(2000),
+    riskScore: MarketRiskScore.HIGH,
+    yourShares: BigInt(15),
+    exercising: "Automatic",
+    eventTime: new Date(),
+    type: MarketType.RISK,
+  },
+];
+*/
 
 const markets: Market[] = [];
 
@@ -207,78 +217,126 @@ const App = () => {
     const fetchData = async () => {
       try {
         if (isMounted) {
-          const CONTRACT_ID = config.marketContracts[0];
+          if (config.marketContracts.length === 0) return;
 
-          const id = Math.random().toString(36);
-          const name = (await getContractData("name", CONTRACT_ID)) as string;
-          const desc = (await getContractData(
-            "description",
-            CONTRACT_ID
-          )) as string;
-          const vault = (await getContractData(
-            "hedge_address",
-            CONTRACT_ID
-          )) as string;
-          const asset = (await getContractData(
-            "asset_symbol",
-            vault
-          )) as string;
-          const oracle = (await getContractData(
-            "oracle_address",
-            CONTRACT_ID
-          )) as string;
-          const admin = (await getContractData(
-            "administrator_address",
-            vault
-          )) as string;
-          const status = (await getContractData(
-            "status",
-            CONTRACT_ID
-          )) as number;
-          const riskScore = (await getContractData(
-            "risk_score",
-            CONTRACT_ID
-          )) as number;
-          const eventTime = (await getContractData(
-            "expected_time_of_event",
-            CONTRACT_ID
-          )) as bigint;
-          const exercising = (await getContractData(
-            "exercising",
-            CONTRACT_ID
-          )) as string;
-          const assets = (await getContractData(
-            "total_assets",
-            vault
-          )) as bigint;
-          const shares = (await getContractData(
-            "total_shares",
-            vault
-          )) as bigint;
-          const yourShares = BigInt(0); // TODO
+          for (let i = 0; i < config.marketContracts.length; i++) {
+            const CONTRACT_ID = config.marketContracts[i];
+            const name = (await getContractData("name", CONTRACT_ID)) as string;
+            const desc = (await getContractData(
+              "description",
+              CONTRACT_ID
+            )) as string;
+            const hedgeVault = (await getContractData(
+              "hedge_address",
+              CONTRACT_ID
+            )) as string;
+            const riskVault = (await getContractData(
+              "risk_address",
+              CONTRACT_ID
+            )) as string;
+            const asset = (await getContractData(
+              "asset_address",
+              hedgeVault
+            )) as string;
+            const assetSymbol = (await getContractData(
+              "asset_symbol",
+              hedgeVault
+            )) as string;
+            const oracle = (await getContractData(
+              "oracle_address",
+              CONTRACT_ID
+            )) as string;
+            const oracleName = (await getContractData(
+              "oracle_name",
+              CONTRACT_ID
+            )) as string;
+            const admin = (await getContractData(
+              "administrator_address",
+              hedgeVault
+            )) as string;
+            const status = (await getContractData(
+              "status",
+              CONTRACT_ID
+            )) as number;
+            const riskScore = (await getContractData(
+              "risk_score",
+              CONTRACT_ID
+            )) as number;
+            const eventTime = (await getContractData(
+              "expected_time_of_event",
+              CONTRACT_ID
+            )) as bigint;
+            const exercising = (await getContractData(
+              "exercising",
+              CONTRACT_ID
+            )) as string;
+            const hedgeAssets = (await getContractData(
+              "total_assets",
+              hedgeVault
+            )) as bigint;
+            const hedgeShares = (await getContractData(
+              "total_shares",
+              hedgeVault
+            )) as bigint;
+            const riskAssets = (await getContractData(
+              "total_assets",
+              riskVault
+            )) as bigint;
+            const riskShares = (await getContractData(
+              "total_shares",
+              riskVault
+            )) as bigint;
+            const yourShares = BigInt(0); // TODO
 
-          const market: Market = {
-            id: id,
-            name: name,
-            description: desc,
-            underlyingAsset: asset,
-            oracleName: oracle,
-            creatorAddress: admin,
-            vaultAddress: vault,
-            status: status,
-            possibleReturn: 0,
-            totalAssets: shares,
-            totalShares: assets,
-            riskScore: riskScore,
-            yourShares: yourShares,
-            exercising: exercising,
-            eventTime: DateTimeConverter.convertUnixSecondsToDate(eventTime),
-            type: MarketType.HEDGE,
-          };
+            const marketHedgeSide: Market = {
+              id: Math.random().toString(36),
+              name: name,
+              description: desc,
+              assetAddress: asset,
+              assetSymbol: assetSymbol,
+              oracleAddress: oracle,
+              oracleName: oracleName,
+              creatorAddress: admin,
+              vaultAddress: hedgeVault,
+              status: status,
+              possibleReturn: 0,
+              totalAssets: hedgeShares,
+              totalShares: hedgeAssets,
+              riskScore: riskScore,
+              yourShares: yourShares,
+              exercising: exercising,
+              eventTime: DateTimeConverter.convertUnixSecondsToDate(eventTime),
+              type: MarketType.HEDGE,
+            };
 
-          console.log("MARKET", market);
+            console.log("HEDGE MARKET", marketHedgeSide);
 
-          markets.push(market);
+            const marketRiskSide: Market = {
+              id: Math.random().toString(36),
+              name: name,
+              description: desc,
+              assetAddress: asset,
+              assetSymbol: assetSymbol,
+              oracleAddress: oracle,
+              oracleName: oracleName,
+              creatorAddress: admin,
+              vaultAddress: riskVault,
+              status: status,
+              possibleReturn: 0,
+              totalAssets: riskShares,
+              totalShares: riskAssets,
+              riskScore: riskScore,
+              yourShares: yourShares,
+              exercising: exercising,
+              eventTime: DateTimeConverter.convertUnixSecondsToDate(eventTime),
+              type: MarketType.RISK,
+            };
+
+            console.log("RISK MARKET", marketRiskSide);
+
+            markets.push(marketHedgeSide);
+            markets.push(marketRiskSide);
+          }
         }
       } catch (error) {
         console.error(error);
@@ -370,7 +428,7 @@ const App = () => {
       riskFilter === "ALL" ? true : market.riskScore === riskFilter
     )
     .filter((market) =>
-      assetFilter === "ALL" ? true : market.underlyingAsset === assetFilter
+      assetFilter === "ALL" ? true : market.assetSymbol === assetFilter
     )
     .sort((a, b) => {
       switch (sortBy) {

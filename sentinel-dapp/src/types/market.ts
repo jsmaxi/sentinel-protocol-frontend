@@ -28,7 +28,9 @@ export type Market = {
   id: string;
   name: string;
   description: string;
-  underlyingAsset: string;
+  assetAddress: string;
+  assetSymbol: string;
+  oracleAddress: string;
   oracleName: string;
   creatorAddress: string;
   vaultAddress: string;
