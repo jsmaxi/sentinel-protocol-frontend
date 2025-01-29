@@ -65,7 +65,6 @@ export default function MarketDetails() {
   const searchParams = useSearchParams();
   const CONTRACT_ID = searchParams.get("market") ?? "";
   const SIDE = searchParams.get("side") ?? "";
-  console.log(CONTRACT_ID, SIDE);
 
   const [selectedAction, setSelectedAction] = useState<ActionType>(null);
   const [amount, setAmount] = useState<string>("");
@@ -75,6 +74,7 @@ export default function MarketDetails() {
   const [error, setError] = useState<ParsedSorobanError | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [market, setMarket] = useState<Market | null>(null);
+  const [refetchMarket, setRefetchMarket] = useState<boolean>(false);
 
   useEffect(() => {
     const checkFreighter = async () => {
@@ -97,27 +97,6 @@ export default function MarketDetails() {
 
     checkFreighter();
   }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchData = async () => {
-      try {
-        if (isMounted) {
-          const hedge = await getContractData("hedge_address");
-          const risk = await getContractData("risk_address");
-          console.log(hedge, risk);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    if (publicKey) fetchData();
-    return () => {
-      isMounted = false;
-    };
-  }, [publicKey]);
 
   const handleConnectWallet = async () => {
     try {
@@ -144,6 +123,11 @@ export default function MarketDetails() {
     const fetchData = async () => {
       try {
         if (isMounted) {
+          // setLoading(true);
+          setError(null);
+
+          console.time("Fetch Market Details Timer");
+
           if (publicKey) {
             const market: MarketDetailsType = (await marketDetails(
               CONTRACT_ID,
@@ -193,13 +177,17 @@ export default function MarketDetails() {
         }
       } catch (error) {
         console.error(error);
+        // display the error
+      } finally {
+        // setLoading(false);
+        console.timeEnd("Fetch Market Details Timer");
       }
     };
     if (publicKey) fetchData();
     return () => {
       isMounted = false;
     };
-  }, [publicKey]);
+  }, [publicKey, refetchMarket]);
 
   const calculateReturn = () => {
     if (!market) return "";
@@ -214,15 +202,6 @@ export default function MarketDetails() {
   };
 
   const handleConfirm = async () => {
-    console.log(
-      "Confirming action:",
-      selectedAction,
-      "with amount:",
-      amount,
-      "owner:",
-      ownerAddress
-    );
-
     if (!publicKey) {
       console.error("Wallet not connected");
       return;
@@ -240,67 +219,65 @@ export default function MarketDetails() {
       return;
     }
 
-    const vaultId = "CBLA7TTMX7ZHY4THNHVLU4LFSEUE2BH2HBXZEBGJNJXYB6QSDZOLLC5B";
-
-    //const _ = await deposit(vaultId, publicKey, publicKey, BigInt(amount));
-
-    // const _ = await mint(vaultId, publicKey, publicKey, BigInt(amount));
-
-    // const _ = await withdraw(
-    //   vaultId,
-    //   publicKey,
-    //   publicKey,
-    //   publicKey,
-    //   BigInt(amount)
-    // );
-
-    // const _ = await redeem(
-    //   vaultId,
-    //   publicKey,
-    //   publicKey,
-    //   publicKey,
-    //   BigInt(amount)
-    // );
-
-    const r = await totalShares(vaultId, publicKey);
-    console.log("TOTAL", r);
-
-    const s = await totalSharesOf(vaultId, publicKey, publicKey);
-    console.log("SHARES", s);
-
-    // setSelectedAction(null);
-    // setAmount("");
-    // setOwnerAddress("");
-  };
-
-  const getContractData = async (operationName: string) => {
-    if (!publicKey) {
-      console.error("Wallet not connected");
+    if (!market?.vaultAddress) {
+      console.error("Vault address missing");
       return;
     }
 
-    if (!CONTRACT_ID) {
-      console.error("Contract ID missing");
-      return;
+    console.log(
+      "Confirming action:",
+      selectedAction,
+      " - with amount:",
+      amount,
+      " - owner address:",
+      ownerAddress
+    );
+
+    switch (selectedAction) {
+      case "deposit":
+        const deposited = await deposit(
+          market.vaultAddress,
+          publicKey,
+          publicKey,
+          BigInt(amount)
+        );
+        break;
+      case "mint":
+        const minted = await mint(
+          market.vaultAddress,
+          publicKey,
+          publicKey,
+          BigInt(amount)
+        );
+        break;
+      case "withdraw":
+        const withdrawn = await withdraw(
+          market.vaultAddress,
+          publicKey,
+          publicKey,
+          publicKey,
+          BigInt(amount)
+        );
+        break;
+      case "redeem":
+        const redeemed = await redeem(
+          market.vaultAddress,
+          publicKey,
+          publicKey,
+          publicKey,
+          BigInt(amount)
+        );
+        break;
+      default:
+        console.log("Invalid action selected");
+        return;
     }
 
-    if (!operationName) {
-      console.error("Operation name missing");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      // const result = await simulateTx(publicKey, CONTRACT_ID, operationName);
-      // console.log("TX", result);
-    } catch (error) {
-      console.log("Error loading data.", error);
-      alert("Error loading data. Please check the console for details.");
-    } finally {
-      setLoading(false);
-    }
+    // Reset fields
+    setSelectedAction(null);
+    setAmount("");
+    setOwnerAddress("");
+    setRefetchMarket(!refetchMarket);
   };
 
   const renderActionContent = () => {
