@@ -10,7 +10,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Market } from "@/types/market";
+import {
+  Market,
+  MarketRiskScore,
+  MarketStatus,
+  MarketType,
+} from "@/types/market";
 import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -33,7 +38,7 @@ import Processing from "../shared/Processing";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
 import config from "../../config/markets.json";
-import { simulateTx } from "@/actions/serverActions";
+// import { simulateTx } from "@/actions/serverActions";
 import ContactEmail from "../shared/ContactEmail";
 
 const CONTRACT_ID = config.marketContracts[0];
@@ -43,37 +48,41 @@ const mockMarkets: Market[] = [
     id: "1",
     name: "Flight Delay Insurance",
     description: "Insurance against flight delays for major airlines",
-    underlyingAsset: "USDC",
+    assetSymbol: "USDC",
+    assetAddress: "GBBD47385729XJKD",
     oracleName: "FlightAPI",
+    oracleAddress: "GBBD47385729XJKD",
     creatorAddress: "GBBD47385729XJKD",
     vaultAddress: "GBBD47385729XJKE",
-    status: "LIVE" as const,
+    status: MarketStatus.LIVE,
     possibleReturn: 12.5,
-    totalAssets: 100000,
-    totalShares: 1000,
-    riskScore: "LOW" as const,
-    yourShares: 10,
+    totalAssets: BigInt(100000),
+    totalShares: BigInt(1000),
+    riskScore: MarketRiskScore.LOW,
+    yourShares: BigInt(10),
     exercising: "AUTO" as const,
     eventTime: new Date(),
-    type: "HEDGE" as const,
+    type: MarketType.HEDGE,
   },
   {
     id: "2",
     name: "Weather Insurance",
     description: "Insurance against bad weather",
-    underlyingAsset: "USDT",
+    assetSymbol: "USDT",
+    assetAddress: "GBBD47385729XJKD",
     oracleName: "WeatherAPI",
+    oracleAddress: "GBBD47385729XJKD",
     creatorAddress: "GBBD47385729XJKE",
     vaultAddress: "GBBD47385729XJKF",
-    status: "LIQUIDATED" as const,
+    status: MarketStatus.LIQUIDATED,
     possibleReturn: 15.0,
-    totalAssets: 200000,
-    totalShares: 2000,
-    riskScore: "MEDIUM" as const,
-    yourShares: 20,
+    totalAssets: BigInt(200000),
+    totalShares: BigInt(2000),
+    riskScore: MarketRiskScore.MEDIUM,
+    yourShares: BigInt(20),
     exercising: "MANUAL" as const,
     eventTime: new Date(),
-    type: "RISK" as const,
+    type: MarketType.RISK,
   },
 ];
 
@@ -81,13 +90,11 @@ const Portfolio = () => {
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<ParsedSorobanError | null>(null);
-  const { toast } = useToast();
-  const [selectedType, setSelectedType] = useState<"ALL" | "HEDGE" | "RISK">(
+  // const { toast } = useToast();
+  const [selectedType, setSelectedType] = useState<"ALL" | MarketType>("ALL");
+  const [selectedStatus, setSelectedStatus] = useState<"ALL" | MarketStatus>(
     "ALL"
   );
-  const [selectedStatus, setSelectedStatus] = useState<
-    "ALL" | "LIVE" | "PAUSED" | "ENDED"
-  >("ALL");
   const [selectedAsset, setSelectedAsset] = useState<"ALL" | "USDC" | "USDT">(
     "ALL"
   );
@@ -188,8 +195,8 @@ const Portfolio = () => {
       setLoading(true);
       setError(null);
 
-      const result = await simulateTx(publicKey, CONTRACT_ID, operationName);
-      console.log("TX", result);
+      // const result = await simulateTx(publicKey, CONTRACT_ID, operationName);
+      // console.log("TX", result);
     } catch (error) {
       console.log("Error loading data.", error);
       alert("Error loading data. Please check the console for details.");
@@ -207,7 +214,7 @@ const Portfolio = () => {
       const statusMatch =
         selectedStatus === "ALL" || market.status === selectedStatus;
       const assetMatch =
-        selectedAsset === "ALL" || market.underlyingAsset === selectedAsset;
+        selectedAsset === "ALL" || market.assetSymbol === selectedAsset;
       return typeMatch && statusMatch && assetMatch;
     });
   }, [selectedType, selectedStatus, selectedAsset]);
@@ -280,7 +287,7 @@ const Portfolio = () => {
                   <div className="space-y-2">
                     <Label>Filter by Side</Label>
                     <RadioGroup
-                      value={selectedType}
+                      value={selectedType.toString()}
                       onValueChange={(value) =>
                         setSelectedType(value as typeof selectedType)
                       }
@@ -304,7 +311,7 @@ const Portfolio = () => {
                   <div className="space-y-2">
                     <Label>Filter by Status</Label>
                     <Select
-                      value={selectedStatus}
+                      value={selectedStatus.toString()}
                       onValueChange={(value) =>
                         setSelectedStatus(value as typeof selectedStatus)
                       }
@@ -369,10 +376,10 @@ const Portfolio = () => {
                       </TableHead>
                       <TableHead
                         className="cursor-pointer hover:text-primary"
-                        onClick={() => requestSort("underlyingAsset")}
+                        onClick={() => requestSort("assetSymbol")}
                       >
                         Asset{" "}
-                        {sortConfig?.key === "underlyingAsset" &&
+                        {sortConfig?.key === "assetSymbol" &&
                           (sortConfig.direction === "asc" ? "↑" : "↓")}
                       </TableHead>
                       <TableHead
@@ -421,7 +428,7 @@ const Portfolio = () => {
                           </Link>
                         </TableCell>
                         <TableCell>{market.type}</TableCell>
-                        <TableCell>{market.underlyingAsset}</TableCell>
+                        <TableCell>{market.assetSymbol}</TableCell>
                         <TableCell>{market.yourShares}</TableCell>
                         <TableCell>{format(market.eventTime, "PPp")}</TableCell>
                         <TableCell>{market.status}</TableCell>

@@ -7,44 +7,42 @@ import {
   scValToNative,
   Transaction,
   TransactionBuilder,
+  xdr,
 } from "@stellar/stellar-sdk";
 import { Api, Server } from "@stellar/stellar-sdk/rpc";
 import config from "../config/markets.json";
+import { SorobanTypeConverter } from "@/utils/SorobanTypeConverter";
 
 const SERVER = new Server(config.sorobanRpcUrl);
 const NETWORK = config.isTestnet ? Networks.TESTNET : Networks.PUBLIC;
+const POLL_INTERVAL_SEC = config.defaultTransactionPollSeconds;
 const TIMEOUT_SEC = config.defaultTimeoutSeconds;
-const POLL_SEC = config.defaultTransactionPollSeconds;
 
-export async function prepareTx(
+async function prepareTx(
   publicKey: string,
   contractId: string,
-  operation: string
+  operationName: string,
+  operationParams: xdr.ScVal[]
 ): Promise<string> {
   console.log("[server] Prepare transaction");
-
   const account = await SERVER.getAccount(publicKey);
-
   const contract = new Contract(contractId);
-
+  const operation = contract.call(operationName, ...operationParams);
   const transaction = new TransactionBuilder(account, {
     fee: BASE_FEE,
   })
     .setNetworkPassphrase(NETWORK)
     .setTimeout(TIMEOUT_SEC)
-    .addOperation(contract.call(operation))
+    .addOperation(operation)
     .build();
-
-  console.log("[server] Preparing transaction...");
+  console.log("[server] Preparing transaction...", transaction);
   const preparedTransaction = await SERVER.prepareTransaction(transaction);
   console.log(preparedTransaction);
-
   if (!preparedTransaction) throw "Empty prepare transaction response.";
-
   return preparedTransaction.toEnvelope().toXDR("base64");
 }
 
-export async function sendTx(signedTransaction: string): Promise<void> {
+export async function sendTx(signedTransaction: string): Promise<boolean> {
   console.log("[server] Send transaction");
 
   const transaction = TransactionBuilder.fromXDR(
@@ -69,7 +67,7 @@ export async function sendTx(signedTransaction: string): Promise<void> {
   while (getResponse.status === "NOT_FOUND") {
     console.log("[server] Waiting for transaction confirmation...");
     getResponse = await SERVER.getTransaction(hash);
-    await new Promise((resolve) => setTimeout(resolve, POLL_SEC));
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_SEC));
   }
 
   if (getResponse.status === "SUCCESS") {
@@ -88,13 +86,14 @@ export async function sendTx(signedTransaction: string): Promise<void> {
 
   console.log("[server] Return value:", returnValue);
 
-  // Ignore the return value after transaction is sent
+  return true;
 }
 
-export async function simulateTx(
+async function simulateTx(
   publicKey: string,
   contractId: string,
-  operation: string
+  operationName: string,
+  operationParams?: xdr.ScVal[]
 ): Promise<string | number | bigint> {
   // console.log("[server] Simulate transaction");
 
@@ -102,12 +101,17 @@ export async function simulateTx(
 
   const contract = new Contract(contractId);
 
+  const operation =
+    operationParams && operationParams.length > 0
+      ? contract.call(operationName, ...operationParams)
+      : contract.call(operationName);
+
   const transaction = new TransactionBuilder(account, {
     fee: BASE_FEE,
   })
     .setNetworkPassphrase(NETWORK)
     .setTimeout(TIMEOUT_SEC)
-    .addOperation(contract.call(operation))
+    .addOperation(operation)
     .build();
 
   // console.log("[server] Simulating transaction...");
@@ -140,4 +144,86 @@ function handleSimulationResponse(
     console.log(response);
     throw "Unexpected simulation response";
   }
+}
+
+export async function simulateTotalShares(
+  contractId: string,
+  operationName: string,
+  caller: string
+): Promise<string | number | bigint> {
+  return await simulateTx(caller, contractId, operationName);
+}
+
+export async function simulateTotalSharesOf(
+  contractId: string,
+  operationName: string,
+  caller: string,
+  address: string
+): Promise<string | number | bigint> {
+  const params = [SorobanTypeConverter.stringToAddress(address)];
+  return await simulateTx(caller, contractId, operationName, params);
+}
+
+export async function prepareDepositVault(
+  contractId: string,
+  operationName: string,
+  caller: string,
+  receiver: string,
+  assets: bigint
+): Promise<string> {
+  const params = [
+    SorobanTypeConverter.toI128(assets),
+    SorobanTypeConverter.stringToAddress(caller),
+    SorobanTypeConverter.stringToAddress(receiver),
+  ];
+  return await prepareTx(caller, contractId, operationName, params);
+}
+
+export async function prepareMintVault(
+  contractId: string,
+  operationName: string,
+  caller: string,
+  receiver: string,
+  shares: bigint
+): Promise<string> {
+  const params = [
+    SorobanTypeConverter.toI128(shares),
+    SorobanTypeConverter.stringToAddress(caller),
+    SorobanTypeConverter.stringToAddress(receiver),
+  ];
+  return await prepareTx(caller, contractId, operationName, params);
+}
+
+export async function prepareWithdrawVault(
+  contractId: string,
+  operationName: string,
+  caller: string,
+  receiver: string,
+  owner: string,
+  assets: bigint
+): Promise<string> {
+  const params = [
+    SorobanTypeConverter.toI128(assets),
+    SorobanTypeConverter.stringToAddress(caller),
+    SorobanTypeConverter.stringToAddress(receiver),
+    SorobanTypeConverter.stringToAddress(owner),
+  ];
+  return await prepareTx(caller, contractId, operationName, params);
+}
+
+export async function prepareRedeemVault(
+  contractId: string,
+  operationName: string,
+  caller: string,
+  receiver: string,
+  owner: string,
+  shares: bigint
+): Promise<string> {
+  const params = [
+    SorobanTypeConverter.toI128(shares),
+    SorobanTypeConverter.stringToAddress(caller),
+    SorobanTypeConverter.stringToAddress(receiver),
+    SorobanTypeConverter.stringToAddress(owner),
+  ];
+  return await prepareTx(caller, contractId, operationName, params);
 }

@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
 import {
@@ -18,8 +17,15 @@ import Processing from "../shared/Processing";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
 import config from "../../config/markets.json";
-import { simulateTx } from "@/actions/serverActions";
 import ContactEmail from "../shared/ContactEmail";
+import {
+  deposit,
+  mint,
+  redeem,
+  totalShares,
+  totalSharesOf,
+  withdraw,
+} from "@/utils/VaultContractCaller";
 
 const CONTRACT_ID = config.marketContracts[0];
 
@@ -49,7 +55,6 @@ const mockMarket = {
 type ActionType = "deposit" | "withdraw" | "mint" | "redeem" | null;
 
 export default function MarketDetails() {
-  const { id } = useParams();
   const market = mockMarket; // Replace with actual data fetching
   const [selectedAction, setSelectedAction] = useState<ActionType>(null);
   const [amount, setAmount] = useState<string>("");
@@ -131,8 +136,7 @@ export default function MarketDetails() {
     setAmount(value);
   };
 
-  const handleConfirm = () => {
-    // Handle confirmation logic here
+  const handleConfirm = async () => {
     console.log(
       "Confirming action:",
       selectedAction,
@@ -141,9 +145,55 @@ export default function MarketDetails() {
       "owner:",
       ownerAddress
     );
-    setSelectedAction(null);
-    setAmount("");
-    setOwnerAddress("");
+
+    if (!publicKey) {
+      console.error("Wallet not connected");
+      return;
+    }
+
+    if (!CONTRACT_ID) {
+      console.error("Contract ID missing");
+      return;
+    }
+
+    const operationName = selectedAction;
+
+    if (!operationName) {
+      console.error("Operation name missing");
+      return;
+    }
+
+    const vaultId = "CBLA7TTMX7ZHY4THNHVLU4LFSEUE2BH2HBXZEBGJNJXYB6QSDZOLLC5B";
+
+    //const _ = await deposit(vaultId, publicKey, publicKey, BigInt(amount));
+
+    // const _ = await mint(vaultId, publicKey, publicKey, BigInt(amount));
+
+    // const _ = await withdraw(
+    //   vaultId,
+    //   publicKey,
+    //   publicKey,
+    //   publicKey,
+    //   BigInt(amount)
+    // );
+
+    // const _ = await redeem(
+    //   vaultId,
+    //   publicKey,
+    //   publicKey,
+    //   publicKey,
+    //   BigInt(amount)
+    // );
+
+    const r = await totalShares(vaultId, publicKey);
+    console.log("TOTAL", r);
+
+    const s = await totalSharesOf(vaultId, publicKey, publicKey);
+    console.log("SHARES", s);
+
+    // setSelectedAction(null);
+    // setAmount("");
+    // setOwnerAddress("");
   };
 
   const getContractData = async (operationName: string) => {
@@ -166,8 +216,8 @@ export default function MarketDetails() {
       setLoading(true);
       setError(null);
 
-      const result = await simulateTx(publicKey, CONTRACT_ID, operationName);
-      console.log("TX", result);
+      // const result = await simulateTx(publicKey, CONTRACT_ID, operationName);
+      // console.log("TX", result);
     } catch (error) {
       console.log("Error loading data.", error);
       alert("Error loading data. Please check the console for details.");

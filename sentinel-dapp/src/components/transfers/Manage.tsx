@@ -25,7 +25,7 @@ import Processing from "../shared/Processing";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
 import config from "../../config/markets.json";
-import { simulateTx } from "@/actions/serverActions";
+// import { simulateTx } from "@/actions/serverActions";
 import ContactEmail from "../shared/ContactEmail";
 
 const CONTRACT_ID = config.marketContracts[0];
@@ -145,8 +145,8 @@ const Manage = () => {
       setLoading(true);
       setError(null);
 
-      const result = await simulateTx(publicKey, CONTRACT_ID, operationName);
-      console.log("TX", result);
+      // const result = await simulateTx(publicKey, CONTRACT_ID, operationName);
+      // console.log("TX", result);
     } catch (error) {
       console.log("Error loading data.", error);
       alert("Error loading data. Please check the console for details.");

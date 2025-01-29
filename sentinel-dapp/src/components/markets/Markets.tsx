@@ -58,7 +58,6 @@ import Processing from "../shared/Processing";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
 import config from "../../config/markets.json";
-import { simulateTx } from "@/actions/serverActions";
 import ContactEmail from "../shared/ContactEmail";
 import { DateTimeConverter } from "@/utils/DateTimeConverter";
 
@@ -403,7 +402,8 @@ const App = () => {
       setLoading(true);
       setError(null);
 
-      return await simulateTx(publicKey, contractId, operationName);
+      // return await simulateTx(publicKey, contractId, operationName);
+      return "";
     } catch (error) {
       console.log("Error loading data.", error);
       alert("Error loading data. Please check the console for details.");
