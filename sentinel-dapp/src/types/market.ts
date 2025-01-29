@@ -33,6 +33,7 @@ export type Market = {
   oracleAddress: string;
   oracleName: string;
   creatorAddress: string;
+  marketAddress: string;
   vaultAddress: string;
   status: MarketStatus;
   possibleReturn: number;
@@ -42,6 +43,7 @@ export type Market = {
   yourShares: bigint;
   exercising: string;
   eventTime: Date;
+  commissionFee: number;
   type: MarketType;
 };
 

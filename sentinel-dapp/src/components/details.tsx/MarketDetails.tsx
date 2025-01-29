@@ -26,42 +26,57 @@ import {
   totalSharesOf,
   withdraw,
 } from "@/utils/VaultContractCaller";
+import { useParams, useSearchParams } from "next/navigation";
+import { fetchBalance } from "@/actions/serverActions";
+import {
+  Market,
+  MarketRiskScore,
+  MarketStatus,
+  MarketType,
+} from "@/types/market";
 
 const CONTRACT_ID = config.marketContracts[0];
 
-// Mock data - replace with actual data fetching
-const mockMarket = {
+const mockMarket: Market = {
   id: "1",
   name: "Flight Delay Insurance",
   description: "Insurance against flight delays",
-  underlyingAsset: "USDC",
-  oracleName: "Acurast",
+  assetSymbol: "USDC",
+  assetAddress: "CBD...",
+  oracleName: "API V2",
+  oracleAddress: "CCD...",
+  marketAddress: "CCD...",
+  vaultAddress: "CCD...",
   creatorAddress: "GBBD...",
-  status: "LIVE",
-  possibleReturn: 12.5,
-  totalAssets: 100000,
-  totalShares: 1000,
-  riskScore: "LOW",
-  yourShares: 10,
-  exercising: "AUTO",
+  status: MarketStatus.LIVE,
+  possibleReturn: 0,
+  totalAssets: BigInt(100000),
+  totalShares: BigInt(1000),
+  riskScore: MarketRiskScore.LOW,
+  yourShares: BigInt(0),
+  exercising: "Automatic",
   eventTime: new Date(),
-  selectedSide: "HEDGE",
-  walletBalance: 1000,
-  hedgeVaultBalance: 5000,
-  riskVaultBalance: 7500,
+  type: MarketType.HEDGE,
   commissionFee: 2.5,
 };
 
 type ActionType = "deposit" | "withdraw" | "mint" | "redeem" | null;
 
 export default function MarketDetails() {
-  const market = mockMarket; // Replace with actual data fetching
+  const market = mockMarket;
+  const { id } = useParams();
+  const searchParams = useSearchParams();
+  const vaultAddress = searchParams.get("vault");
+  console.log(id, vaultAddress, "::");
+
+  // const market = mockMarket; // Replace with actual data fetching
   const [selectedAction, setSelectedAction] = useState<ActionType>(null);
   const [amount, setAmount] = useState<string>("");
   const [ownerAddress, setOwnerAddress] = useState<string>("");
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<ParsedSorobanError | null>(null);
+  const [balance, setBalance] = useState<number | null>(null);
 
   useEffect(() => {
     const checkFreighter = async () => {
@@ -126,13 +141,34 @@ export default function MarketDetails() {
     }
   };
 
+  useEffect(() => {
+    let isMounted = true;
+    const fetchData = async () => {
+      try {
+        if (isMounted) {
+          if (publicKey && market.assetSymbol) {
+            const bal = await fetchBalance(publicKey, market.assetSymbol);
+            if (bal !== undefined) setBalance(Number(bal.balance));
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    if (publicKey) fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, [publicKey]);
+
   const calculateReturn = () => {
     const inputAmount = parseFloat(amount) || 0;
     return (inputAmount * (1 + market.possibleReturn / 100)).toFixed(2);
   };
 
   const handlePercentageClick = (percentage: number) => {
-    const value = ((market.walletBalance * percentage) / 100).toString();
+    const value =
+      balance === null ? "" : ((balance * percentage) / 100).toString();
     setAmount(value);
   };
 
@@ -303,7 +339,7 @@ export default function MarketDetails() {
               <div className="text-sm">
                 <span className="text-muted-foreground">Estimated return:</span>
                 <span className="ml-2">
-                  {calculateReturn()} {market.underlyingAsset}
+                  {calculateReturn()} {market.assetSymbol}
                 </span>
               </div>
               <Button onClick={handleConfirm} className="w-full">
@@ -351,7 +387,7 @@ export default function MarketDetails() {
                     </p>
                   </div>
                   <Badge className="bg-green-500/20 text-green-500">
-                    {market.status}
+                    {MarketStatus[market.status]}
                   </Badge>
                 </div>
               </CardHeader>
@@ -364,7 +400,7 @@ export default function MarketDetails() {
                     <div className="flex items-center gap-2">
                       <Shield className="h-5 w-5" />
                       <span className="text-lg font-semibold">
-                        {market.selectedSide}
+                        {MarketType[market.type]}
                       </span>
                     </div>
                   </div>
@@ -375,7 +411,9 @@ export default function MarketDetails() {
                     <div className="flex items-center gap-2">
                       <Wallet className="h-5 w-5" />
                       <span className="text-lg font-semibold">
-                        {market.walletBalance} {market.underlyingAsset}
+                        {balance === null
+                          ? "Loading..."
+                          : balance + " " + market.assetSymbol}
                       </span>
                     </div>
                   </div>
@@ -387,13 +425,13 @@ export default function MarketDetails() {
                       <div className="flex items-center gap-2 text-sm">
                         <span className="text-muted-foreground">Hedge:</span>
                         <span>
-                          {market.hedgeVaultBalance} {market.underlyingAsset}
+                          {0} {market.assetSymbol}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <span className="text-muted-foreground">Risk:</span>
                         <span>
-                          {market.riskVaultBalance} {market.underlyingAsset}
+                          {0} {market.assetSymbol}
                         </span>
                       </div>
                     </div>

@@ -242,6 +242,7 @@ const App = () => {
                   oracleAddress: market.oracle_address,
                   oracleName: market.oracle_name,
                   creatorAddress: market.hedge_admin_address,
+                  marketAddress: CONTRACT_ID,
                   vaultAddress: market.hedge_address,
                   status: market.status,
                   possibleReturn: 0,
@@ -253,6 +254,7 @@ const App = () => {
                   eventTime: DateTimeConverter.convertUnixSecondsToDate(
                     market.event_time
                   ),
+                  commissionFee: market.commission_fee,
                   type: MarketType.HEDGE,
                 };
 
@@ -265,6 +267,7 @@ const App = () => {
                   oracleAddress: market.oracle_address,
                   oracleName: market.oracle_name,
                   creatorAddress: market.risk_admin_address,
+                  marketAddress: CONTRACT_ID,
                   vaultAddress: market.risk_address,
                   status: market.status,
                   possibleReturn: 0,
@@ -276,6 +279,7 @@ const App = () => {
                   eventTime: DateTimeConverter.convertUnixSecondsToDate(
                     market.event_time
                   ),
+                  commissionFee: market.commission_fee,
                   type: MarketType.RISK,
                 };
 

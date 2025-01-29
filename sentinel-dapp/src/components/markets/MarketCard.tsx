@@ -41,7 +41,7 @@ export function MarketCard({ market }: MarketCardProps) {
   };
 
   return (
-    <Link href={`/market/${market.id}`}>
+    <Link href={`/market/${market.marketAddress}?vault=${market.vaultAddress}`}>
       <Card className="hover:scale-[1.02] transition-transform duration-200 glass">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-xl font-semibold">{market.name}</CardTitle>
@@ -103,14 +103,22 @@ export function MarketCard({ market }: MarketCardProps) {
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Your Shares</span>
-              <span className="text-sm font-medium">{market.yourShares}</span>
+              <span className="text-sm text-muted-foreground">
+                Total Assets
+              </span>
+              <span className="text-sm font-medium">{market.totalAssets}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">
                 Total Shares
               </span>
               <span className="text-sm font-medium">{market.totalShares}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Commission</span>
+              <span className="text-sm font-medium">
+                {market.commissionFee} %
+              </span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-border">
               <span className="text-sm text-muted-foreground">

@@ -164,6 +164,14 @@ export async function fetchBalances(
   return mappedBalances;
 }
 
+export async function fetchBalance(
+  publicKey: string,
+  assetSymbol: string
+): Promise<AssetBalanceType | undefined> {
+  const balances = await fetchBalances(publicKey);
+  return balances.find((b) => b.symbol === assetSymbol);
+}
+
 export async function simulateGetAction(
   contractId: string,
   operationName: string,

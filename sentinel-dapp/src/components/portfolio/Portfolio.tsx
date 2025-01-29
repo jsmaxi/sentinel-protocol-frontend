@@ -55,6 +55,7 @@ const mockMarkets: Market[] = [
     oracleName: "FlightAPI",
     oracleAddress: "GBBD47385729XJKD",
     creatorAddress: "GBBD47385729XJKD",
+    marketAddress: "GBBD47385729XJKD",
     vaultAddress: "GBBD47385729XJKE",
     status: MarketStatus.LIVE,
     possibleReturn: 12.5,
@@ -64,6 +65,7 @@ const mockMarkets: Market[] = [
     yourShares: BigInt(10),
     exercising: "AUTO" as const,
     eventTime: new Date(),
+    commissionFee: 10,
     type: MarketType.HEDGE,
   },
   {
@@ -75,6 +77,7 @@ const mockMarkets: Market[] = [
     oracleName: "WeatherAPI",
     oracleAddress: "GBBD47385729XJKD",
     creatorAddress: "GBBD47385729XJKE",
+    marketAddress: "GBBD47385729XJKD",
     vaultAddress: "GBBD47385729XJKF",
     status: MarketStatus.LIQUIDATED,
     possibleReturn: 15.0,
@@ -84,6 +87,7 @@ const mockMarkets: Market[] = [
     yourShares: BigInt(20),
     exercising: "MANUAL" as const,
     eventTime: new Date(),
+    commissionFee: 5,
     type: MarketType.RISK,
   },
 ];
@@ -422,17 +426,17 @@ const Portfolio = () => {
                       <TableRow key={market.id}>
                         <TableCell>
                           <Link
-                            href={`/market/${market.id}`}
-                            className="hover:text-primary"
+                            href={`/market/${market.marketAddress}?vault=${market.vaultAddress}`}
+                            className="hover:text-primary hover:underline"
                           >
                             {market.name}
                           </Link>
                         </TableCell>
-                        <TableCell>{market.type}</TableCell>
+                        <TableCell>{MarketType[market.type]}</TableCell>
                         <TableCell>{market.assetSymbol}</TableCell>
                         <TableCell>{market.yourShares}</TableCell>
                         <TableCell>{format(market.eventTime, "PPp")}</TableCell>
-                        <TableCell>{market.status}</TableCell>
+                        <TableCell>{MarketStatus[market.status]}</TableCell>
                         <TableCell>{market.possibleReturn}%</TableCell>
                       </TableRow>
                     ))}
