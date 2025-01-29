@@ -227,3 +227,71 @@ export async function prepareRedeemVault(
   ];
   return await prepareTx(caller, contractId, operationName, params);
 }
+
+export async function prepareApproveShares(
+  contractId: string,
+  operationName: string,
+  caller: string,
+  owner: string,
+  spender: string,
+  approveAmount: bigint,
+  expireInDays: number
+): Promise<string> {
+  const params = [
+    SorobanTypeConverter.stringToAddress(owner),
+    SorobanTypeConverter.stringToAddress(spender),
+    SorobanTypeConverter.toI128(approveAmount),
+    SorobanTypeConverter.toU32(expireInDays),
+  ];
+  return await prepareTx(caller, contractId, operationName, params);
+}
+
+export async function prepareApproveAssets(
+  assetAddress: string,
+  operationName: string,
+  caller: string,
+  owner: string,
+  spender: string,
+  approveAmount: bigint,
+  expirationLedger: number
+): Promise<string> {
+  const params = [
+    SorobanTypeConverter.stringToAddress(owner),
+    SorobanTypeConverter.stringToAddress(spender),
+    SorobanTypeConverter.toI128(approveAmount),
+    SorobanTypeConverter.toU32(expirationLedger),
+  ];
+  return await prepareTx(caller, assetAddress, operationName, params);
+}
+
+export async function prepareTransferAssets(
+  assetAddress: string,
+  operationName: string,
+  caller: string,
+  owner: string,
+  receiver: string,
+  amount: bigint
+): Promise<string> {
+  const params = [
+    SorobanTypeConverter.stringToAddress(owner),
+    SorobanTypeConverter.stringToAddress(receiver),
+    SorobanTypeConverter.toI128(amount),
+  ];
+  return await prepareTx(caller, assetAddress, operationName, params);
+}
+
+export async function prepareTransferShares(
+  contractId: string,
+  operationName: string,
+  caller: string,
+  owner: string,
+  receiver: string,
+  sharesAmount: bigint
+): Promise<string> {
+  const params = [
+    SorobanTypeConverter.stringToAddress(owner),
+    SorobanTypeConverter.stringToAddress(receiver),
+    SorobanTypeConverter.toI128(sharesAmount),
+  ];
+  return await prepareTx(caller, contractId, operationName, params);
+}

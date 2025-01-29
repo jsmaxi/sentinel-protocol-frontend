@@ -1,8 +1,12 @@
 import { signTx } from "@/actions/clientActions";
 import {
+  prepareApproveAssets,
+  prepareApproveShares,
   prepareDepositVault,
   prepareMintVault,
   prepareRedeemVault,
+  prepareTransferAssets,
+  prepareTransferShares,
   prepareWithdrawVault,
   sendTx,
   simulateTotalShares,
@@ -96,6 +100,87 @@ export async function redeem(
     receiver,
     owner,
     shares
+  );
+  const sgn = await signTx(prep);
+  return await sendTx(sgn);
+}
+
+export async function approveShares(
+  vaultAddress: string,
+  caller: string,
+  owner: string,
+  spender: string,
+  approveAmount: bigint,
+  expireInDays: number
+): Promise<boolean> {
+  const prep = await prepareApproveShares(
+    vaultAddress,
+    "approve_shares",
+    caller,
+    owner,
+    spender,
+    approveAmount,
+    expireInDays
+  );
+  const sgn = await signTx(prep);
+  return await sendTx(sgn);
+}
+
+export async function approveAssets(
+  assetAddress: string,
+  caller: string,
+  owner: string,
+  spender: string,
+  approveAmount: bigint,
+  expirationLedger: number
+): Promise<boolean> {
+  const prep = await prepareApproveAssets(
+    assetAddress,
+    "approve",
+    caller,
+    owner,
+    spender,
+    approveAmount,
+    expirationLedger
+  );
+  const sgn = await signTx(prep);
+  return await sendTx(sgn);
+}
+
+export async function transferAssets(
+  assetAddress: string,
+  caller: string,
+  owner: string,
+  receiver: string,
+  amount: bigint
+): Promise<boolean> {
+  // decimals ** ?
+  const prep = await prepareTransferAssets(
+    assetAddress,
+    "transfer",
+    caller,
+    owner,
+    receiver,
+    amount
+  );
+  const sgn = await signTx(prep);
+  return await sendTx(sgn);
+}
+
+export async function transferShares(
+  vaultAddress: string,
+  caller: string,
+  owner: string,
+  receiver: string,
+  sharesAmount: bigint
+): Promise<boolean> {
+  const prep = await prepareTransferShares(
+    vaultAddress,
+    "transfer_shares",
+    caller,
+    owner,
+    receiver,
+    sharesAmount
   );
   const sgn = await signTx(prep);
   return await sendTx(sgn);
