@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -14,7 +13,7 @@ import {
   FormLabel,
   FormControl,
 } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { FieldValues, useForm } from "react-hook-form";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
 import {
@@ -24,14 +23,15 @@ import {
 import Processing from "../shared/Processing";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
-import config from "../../config/markets.json";
-// import { simulateTx } from "@/actions/serverActions";
 import ContactEmail from "../shared/ContactEmail";
-
-const CONTRACT_ID = config.marketContracts[0];
+import {
+  approveAssets,
+  approveShares,
+  transferAssets,
+  transferShares,
+} from "@/utils/VaultContractCaller";
 
 const Manage = () => {
-  const { toast } = useToast();
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -85,27 +85,6 @@ const Manage = () => {
   };
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchData = async () => {
-      try {
-        if (isMounted) {
-          const hedge = await getContractData("hedge_address");
-          const risk = await getContractData("risk_address");
-          console.log(hedge, risk);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    if (publicKey) fetchData();
-    return () => {
-      isMounted = false;
-    };
-  }, [publicKey]);
-
-  useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 400);
     };
@@ -118,38 +97,95 @@ const Manage = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const showComingSoon = () => {
-    toast({
-      title: "Coming Soon",
-      description: "This feature is under development.",
-    });
-  };
-
-  const getContractData = async (operationName: string) => {
-    if (!publicKey) {
-      console.error("Wallet not connected");
-      return;
-    }
-
-    if (!CONTRACT_ID) {
-      console.error("Contract ID missing");
-      return;
-    }
-
-    if (!operationName) {
-      console.error("Operation name missing");
-      return;
-    }
-
+  const transferSharesTo = async () => {
     try {
       setLoading(true);
       setError(null);
-
-      // const result = await simulateTx(publicKey, CONTRACT_ID, operationName);
-      // console.log("TX", result);
+      if (!publicKey) {
+        console.log("Account not connected");
+        return;
+      }
+      const _ = await transferShares(
+        transferSharesForm.getValues("vaultAddress"),
+        publicKey,
+        publicKey,
+        transferSharesForm.getValues("receiverAddress"),
+        transferSharesForm.getValues("transferAmount")
+      );
     } catch (error) {
-      console.log("Error loading data.", error);
-      alert("Error loading data. Please check the console for details.");
+      console.log("Error", error);
+      // set error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const transferAssetsTo = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      if (!publicKey) {
+        console.log("Account not connected");
+        return;
+      }
+      const _ = await transferAssets(
+        transferAssetsForm.getValues("assetAddress"),
+        publicKey,
+        publicKey,
+        transferAssetsForm.getValues("receiverAddress"),
+        transferAssetsForm.getValues("transferAmount")
+      );
+    } catch (error) {
+      console.log("Error", error);
+      // set error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const approveSharesTo = async (fields: FieldValues) => {
+    try {
+      setLoading(true);
+      setError(null);
+      if (!publicKey) {
+        console.log("Account not connected");
+        return;
+      }
+      const _ = await approveShares(
+        fields["vaultAddress"],
+        publicKey,
+        publicKey,
+        fields["spenderAddress"],
+        fields["approveAmount"],
+        fields["expiresInDays"]
+      );
+    } catch (error) {
+      console.log("Error", error);
+      // set error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const approveAssetsTo = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      if (!publicKey) {
+        console.log("Account not connected");
+        return;
+      }
+      const _ = await approveAssets(
+        transferAssetsForm.getValues("assetAddress"),
+        publicKey,
+        publicKey,
+        transferAssetsForm.getValues("spenderAddress"),
+        transferAssetsForm.getValues("approveAmount"),
+        transferAssetsForm.getValues("expirationLedger")
+      );
+    } catch (error) {
+      console.log("Error", error);
+      // set error
     } finally {
       setLoading(false);
     }
@@ -157,7 +193,6 @@ const Manage = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Background Ornaments */}
       <div className="absolute inset-0 bg-grid animate-grid-flow opacity-10" />
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
@@ -225,7 +260,9 @@ const Manage = () => {
                 <Form {...approveSharesForm}>
                   <h2 className="text-xl text-center">Approve Shares</h2>
                   <form
-                    onSubmit={approveSharesForm.handleSubmit(showComingSoon)}
+                    onSubmit={approveSharesForm.handleSubmit((e) =>
+                      approveSharesTo(e)
+                    )}
                     className="space-y-4"
                   >
                     <FormField
@@ -301,7 +338,7 @@ const Manage = () => {
                 <Form {...transferSharesForm}>
                   <h2 className="text-xl text-center">Transfer Shares</h2>
                   <form
-                    onSubmit={transferSharesForm.handleSubmit(showComingSoon)}
+                    onSubmit={transferSharesForm.handleSubmit(transferSharesTo)}
                     className="space-y-4"
                   >
                     <FormField
@@ -361,7 +398,7 @@ const Manage = () => {
                 <Form {...approveAssetsForm}>
                   <h2 className="text-xl text-center">Approve Assets</h2>
                   <form
-                    onSubmit={approveAssetsForm.handleSubmit(showComingSoon)}
+                    onSubmit={approveAssetsForm.handleSubmit(approveAssetsTo)}
                     className="space-y-4"
                   >
                     <FormField
@@ -437,7 +474,7 @@ const Manage = () => {
                 <Form {...transferAssetsForm}>
                   <h2 className="text-xl text-center">Transfer Assets</h2>
                   <form
-                    onSubmit={transferAssetsForm.handleSubmit(showComingSoon)}
+                    onSubmit={transferAssetsForm.handleSubmit(transferAssetsTo)}
                     className="space-y-4"
                   >
                     <FormField

@@ -168,6 +168,7 @@ const App = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<ParsedSorobanError | null>(null);
   const [markets, setMarkets] = useState<Market[]>([]);
+  const [activeMarkets, setActiveMarkets] = useState<number>(0);
 
   useEffect(() => {
     const checkFreighter = async () => {
@@ -218,6 +219,7 @@ const App = () => {
       try {
         if (isMounted) {
           setMarkets([]);
+          setActiveMarkets(0);
           setLoading(true);
           setError(null);
 
@@ -233,77 +235,79 @@ const App = () => {
 
           console.time("Fetch Markets Timer");
 
+          let marketsCount = 0;
+
           for (let i = 0; i < config.marketContracts.length; i++) {
             const CONTRACT_ID = config.marketContracts[i];
 
-            if (publicKey) {
-              const market: MarketDetailsType = (await marketDetails(
-                CONTRACT_ID,
-                publicKey
-              )) as MarketDetailsType;
-              console.log("Market", market);
+            const market: MarketDetailsType = (await marketDetails(
+              CONTRACT_ID,
+              publicKey
+            )) as MarketDetailsType;
+            console.log("Market", market);
 
-              if (market) {
-                const marketHedgeSide: Market = {
-                  id: Math.random().toString(36),
-                  name: market.name,
-                  description: market.description,
-                  assetAddress: market.hedge_asset_address,
-                  assetSymbol: market.risk_asset_symbol,
-                  oracleAddress: market.oracle_address,
-                  oracleName: market.oracle_name,
-                  creatorAddress: market.hedge_admin_address,
-                  marketAddress: CONTRACT_ID,
-                  vaultAddress: market.hedge_address,
-                  status: market.status,
-                  possibleReturn: 0,
-                  totalAssets: market.hedge_total_assets,
-                  totalShares: market.hedge_total_shares,
-                  riskScore: market.risk_score,
-                  yourShares: BigInt(0),
-                  exercising: market.is_automatic ? "Automatic" : "Manual",
-                  eventTime: DateTimeConverter.convertUnixSecondsToDate(
-                    market.event_time
-                  ),
-                  commissionFee: market.commission_fee,
-                  type: MarketType.HEDGE,
-                };
+            if (market) {
+              const marketHedgeSide: Market = {
+                id: Math.random().toString(36),
+                name: market.name,
+                description: market.description,
+                assetAddress: market.hedge_asset_address,
+                assetSymbol: market.risk_asset_symbol,
+                oracleAddress: market.oracle_address,
+                oracleName: market.oracle_name,
+                creatorAddress: market.hedge_admin_address,
+                marketAddress: CONTRACT_ID,
+                vaultAddress: market.hedge_address,
+                status: market.status,
+                possibleReturn: 0,
+                totalAssets: market.hedge_total_assets,
+                totalShares: market.hedge_total_shares,
+                riskScore: market.risk_score,
+                yourShares: BigInt(0),
+                exercising: market.is_automatic ? "Automatic" : "Manual",
+                eventTime: DateTimeConverter.convertUnixSecondsToDate(
+                  market.event_time
+                ),
+                commissionFee: market.commission_fee,
+                type: MarketType.HEDGE,
+              };
 
-                const marketRiskSide: Market = {
-                  id: Math.random().toString(36),
-                  name: market.name,
-                  description: market.description,
-                  assetAddress: market.risk_asset_address,
-                  assetSymbol: market.risk_asset_symbol,
-                  oracleAddress: market.oracle_address,
-                  oracleName: market.oracle_name,
-                  creatorAddress: market.risk_admin_address,
-                  marketAddress: CONTRACT_ID,
-                  vaultAddress: market.risk_address,
-                  status: market.status,
-                  possibleReturn: 0,
-                  totalAssets: market.risk_total_assets,
-                  totalShares: market.risk_total_shares,
-                  riskScore: market.risk_score,
-                  yourShares: BigInt(0),
-                  exercising: market.is_automatic ? "Automatic" : "Manual",
-                  eventTime: DateTimeConverter.convertUnixSecondsToDate(
-                    market.event_time
-                  ),
-                  commissionFee: market.commission_fee,
-                  type: MarketType.RISK,
-                };
+              const marketRiskSide: Market = {
+                id: Math.random().toString(36),
+                name: market.name,
+                description: market.description,
+                assetAddress: market.risk_asset_address,
+                assetSymbol: market.risk_asset_symbol,
+                oracleAddress: market.oracle_address,
+                oracleName: market.oracle_name,
+                creatorAddress: market.risk_admin_address,
+                marketAddress: CONTRACT_ID,
+                vaultAddress: market.risk_address,
+                status: market.status,
+                possibleReturn: 0,
+                totalAssets: market.risk_total_assets,
+                totalShares: market.risk_total_shares,
+                riskScore: market.risk_score,
+                yourShares: BigInt(0),
+                exercising: market.is_automatic ? "Automatic" : "Manual",
+                eventTime: DateTimeConverter.convertUnixSecondsToDate(
+                  market.event_time
+                ),
+                commissionFee: market.commission_fee,
+                type: MarketType.RISK,
+              };
 
-                setMarkets((prev) => [
-                  ...prev,
-                  marketHedgeSide,
-                  marketRiskSide,
-                ]);
-              } else {
-                // No market found
+              setMarkets((prev) => [...prev, marketHedgeSide, marketRiskSide]);
+
+              if (market.status === MarketStatus.LIVE) {
+                marketsCount++;
               }
+            } else {
+              // No market found
             }
           }
+
+          setActiveMarkets(marketsCount);
 
           console.timeEnd("Fetch Markets Timer");
         }
@@ -510,7 +514,7 @@ const App = () => {
                       <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">2</div>
+                      <div className="text-2xl font-bold">{activeMarkets}</div>
                     </CardContent>
                   </Card>
                   <Card className="glass hover:scale-105 transition-transform">
