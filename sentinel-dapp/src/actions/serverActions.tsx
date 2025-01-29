@@ -180,6 +180,15 @@ export async function simulateGetAction(
   return await simulateTx(caller, contractId, operationName);
 }
 
+export async function simulateMarketDetails(
+  contractId: string,
+  operationName: string,
+  caller: string
+): Promise<string | number | bigint | object> {
+  const params = [SorobanTypeConverter.stringToAddress(caller)];
+  return await simulateTx(caller, contractId, operationName, params);
+}
+
 export async function simulateTotalSharesOf(
   contractId: string,
   operationName: string,

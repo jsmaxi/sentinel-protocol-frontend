@@ -146,16 +146,26 @@ export default function MarketDetails() {
               name: market.name,
               description: market.description,
               assetAddress: market.hedge_asset_address,
-              assetSymbol: market.risk_asset_symbol,
+              assetSymbol: isHedge
+                ? market.hedge_asset_symbol
+                : market.risk_asset_symbol,
               oracleAddress: market.oracle_address,
               oracleName: market.oracle_name,
-              creatorAddress: market.hedge_admin_address,
+              creatorAddress: isHedge
+                ? market.hedge_admin_address
+                : market.risk_admin_address,
               marketAddress: CONTRACT_ID,
-              vaultAddress: market.hedge_address,
+              vaultAddress: isHedge
+                ? market.hedge_address
+                : market.risk_address,
               status: market.status,
               possibleReturn: 0,
-              totalAssets: market.hedge_total_assets,
-              totalShares: market.hedge_total_shares,
+              totalAssets: isHedge
+                ? market.hedge_total_assets
+                : market.risk_total_assets,
+              totalShares: isHedge
+                ? market.hedge_total_shares
+                : market.risk_total_shares,
               riskScore: market.risk_score,
               yourShares: isHedge
                 ? market.hedge_address_shares
@@ -441,19 +451,19 @@ export default function MarketDetails() {
                   </div>
                   <div className="space-y-2">
                     <span className="text-sm text-muted-foreground">
-                      Vault Balances
+                      Vault Shares
                     </span>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 text-sm">
-                        <span className="text-muted-foreground">Hedge:</span>
+                        <span className="text-muted-foreground">Total:</span>
                         <span>
-                          {0} {market?.assetSymbol}
+                          {market?.totalShares} {market?.assetSymbol}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <span className="text-muted-foreground">Risk:</span>
+                        <span className="text-muted-foreground">Your:</span>
                         <span>
-                          {0} {market?.assetSymbol}
+                          {market?.yourShares} {market?.assetSymbol}
                         </span>
                       </div>
                     </div>

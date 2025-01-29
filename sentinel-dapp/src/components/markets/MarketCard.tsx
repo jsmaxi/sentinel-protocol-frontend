@@ -124,6 +124,10 @@ export function MarketCard({ market }: MarketCardProps) {
               <span className="text-sm font-medium">{market.totalShares}</span>
             </div>
             <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Your Shares</span>
+              <span className="text-sm font-medium">{market.yourShares}</span>
+            </div>
+            <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Commission</span>
               <span className="text-sm font-medium">
                 {market.commissionFee} %
