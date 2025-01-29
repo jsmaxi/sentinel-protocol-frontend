@@ -3,6 +3,7 @@
 import {
   BASE_FEE,
   Contract,
+  Horizon,
   Networks,
   scValToNative,
   Transaction,
@@ -12,6 +13,7 @@ import {
 import { Api, Server } from "@stellar/stellar-sdk/rpc";
 import config from "../config/markets.json";
 import { SorobanTypeConverter } from "@/utils/SorobanTypeConverter";
+import { AssetBalanceType } from "@/types/market";
 
 const SERVER = new Server(config.sorobanRpcUrl);
 const NETWORK = config.isTestnet ? Networks.TESTNET : Networks.PUBLIC;
@@ -144,6 +146,22 @@ function handleSimulationResponse(
     console.log(response);
     throw "Unexpected simulation response";
   }
+}
+
+export async function fetchBalances(
+  publicKey: string
+): Promise<AssetBalanceType[]> {
+  const server = new Horizon.Server(config.horizonRpcUrl);
+  const account = await server.accounts().accountId(publicKey).call();
+  const balances = account?.balances;
+  if (!balances) throw "Account balances not found";
+  console.log(balances);
+  const mappedBalances: AssetBalanceType[] = balances.map((bal: any) =>
+    bal.asset_type === "native"
+      ? { symbol: "XLM", balance: bal.balance }
+      : { symbol: bal.asset_code, balance: bal.balance }
+  );
+  return mappedBalances;
 }
 
 export async function simulateTotalShares(

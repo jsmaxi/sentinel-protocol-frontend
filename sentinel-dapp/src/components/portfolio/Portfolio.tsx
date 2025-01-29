@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {
+  AssetBalanceType,
   Market,
   MarketRiskScore,
   MarketStatus,
@@ -40,6 +41,7 @@ import NetworkInfo from "../shared/NetworkInfo";
 import config from "../../config/markets.json";
 // import { simulateTx } from "@/actions/serverActions";
 import ContactEmail from "../shared/ContactEmail";
+import { fetchBalances } from "@/actions/serverActions";
 
 const CONTRACT_ID = config.marketContracts[0];
 
@@ -87,6 +89,7 @@ const mockMarkets: Market[] = [
 ];
 
 const Portfolio = () => {
+  const [balances, setBalances] = useState<AssetBalanceType[]>([]);
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<ParsedSorobanError | null>(null);
@@ -103,14 +106,13 @@ const Portfolio = () => {
     direction: "asc" | "desc";
   } | null>(null);
 
-  // Mock wallet balances
-  const walletBalances = [
-    { symbol: "XLM", balance: "1,234.5678" },
-    { symbol: "USDC", balance: "10,000.00" },
-    { symbol: "USDT", balance: "5,000.00" },
-    { symbol: "BTC", balance: "0.12345678" },
-    { symbol: "ETH", balance: "1.23456789" },
-  ];
+  // const mockWalletBalances = [
+  //   { symbol: "XLM", balance: "1,234.5678" },
+  //   { symbol: "USDC", balance: "10,000.00" },
+  //   { symbol: "USDT", balance: "5,000.00" },
+  //   { symbol: "BTC", balance: "0.12345678" },
+  //   { symbol: "ETH", balance: "1.23456789" },
+  // ];
 
   useEffect(() => {
     const checkFreighter = async () => {
@@ -136,19 +138,18 @@ const Portfolio = () => {
 
   useEffect(() => {
     let isMounted = true;
-
     const fetchData = async () => {
       try {
         if (isMounted) {
-          const hedge = await getContractData("hedge_address");
-          const risk = await getContractData("risk_address");
-          console.log(hedge, risk);
+          if (publicKey) {
+            const bal = await fetchBalances(publicKey);
+            setBalances(bal);
+          }
         }
       } catch (error) {
         console.error(error);
       }
     };
-
     if (publicKey) fetchData();
     return () => {
       isMounted = false;
@@ -443,19 +444,23 @@ const Portfolio = () => {
               <div className="space-y-4 mt-8">
                 <h2 className="text-xl font-semibold">Wallet Balances</h2>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {walletBalances.map((balance) => (
-                    <div
-                      key={balance.symbol}
-                      className="p-4 rounded-lg border border-border/40 backdrop-blur-sm bg-background/80"
-                    >
-                      <div className="text-sm text-muted-foreground">
-                        {balance.symbol}
+                  {balances.length > 0 ? (
+                    balances.map((balance) => (
+                      <div
+                        key={balance.symbol}
+                        className="p-4 rounded-lg border border-border/40 backdrop-blur-sm bg-background/80"
+                      >
+                        <div className="text-sm text-muted-foreground">
+                          {balance.symbol}
+                        </div>
+                        <div className="text-lg font-semibold">
+                          {balance.balance}
+                        </div>
                       </div>
-                      <div className="text-lg font-semibold">
-                        {balance.balance}
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p>No balances found</p>
+                  )}
                 </div>
               </div>
             </>

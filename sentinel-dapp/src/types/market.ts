@@ -44,3 +44,8 @@ export type Market = {
   eventTime: Date;
   type: MarketType;
 };
+
+export interface AssetBalanceType {
+  symbol: string;
+  balance: string;
+}
