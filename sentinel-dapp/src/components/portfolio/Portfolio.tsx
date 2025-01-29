@@ -426,7 +426,9 @@ const Portfolio = () => {
                       <TableRow key={market.id}>
                         <TableCell>
                           <Link
-                            href={`/market/${market.marketAddress}?vault=${market.vaultAddress}`}
+                            href={`/market/${market.id}?market=${
+                              market.marketAddress
+                            }&side=${MarketType[market.type]}`}
                             className="hover:text-primary hover:underline"
                           >
                             {market.name}

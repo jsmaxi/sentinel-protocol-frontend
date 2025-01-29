@@ -16,7 +16,6 @@ import {
 import Processing from "../shared/Processing";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
-import config from "../../config/markets.json";
 import ContactEmail from "../shared/ContactEmail";
 import {
   deposit,
@@ -26,50 +25,48 @@ import {
   totalSharesOf,
   withdraw,
 } from "@/utils/VaultContractCaller";
-import { useParams, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { fetchBalance } from "@/actions/serverActions";
 import {
   Market,
-  MarketRiskScore,
+  MarketDetailsType,
   MarketStatus,
   MarketType,
 } from "@/types/market";
+import { DateTimeConverter } from "@/utils/DateTimeConverter";
+import { marketDetails } from "@/utils/MarketContractCaller";
 
-const CONTRACT_ID = config.marketContracts[0];
-
-const mockMarket: Market = {
-  id: "1",
-  name: "Flight Delay Insurance",
-  description: "Insurance against flight delays",
-  assetSymbol: "USDC",
-  assetAddress: "CBD...",
-  oracleName: "API V2",
-  oracleAddress: "CCD...",
-  marketAddress: "CCD...",
-  vaultAddress: "CCD...",
-  creatorAddress: "GBBD...",
-  status: MarketStatus.LIVE,
-  possibleReturn: 0,
-  totalAssets: BigInt(100000),
-  totalShares: BigInt(1000),
-  riskScore: MarketRiskScore.LOW,
-  yourShares: BigInt(0),
-  exercising: "Automatic",
-  eventTime: new Date(),
-  type: MarketType.HEDGE,
-  commissionFee: 2.5,
-};
+// const mockMarket: Market = {
+//   id: "1",
+//   name: "Flight Delay Insurance",
+//   description: "Insurance against flight delays",
+//   assetSymbol: "USDC",
+//   assetAddress: "CBD...",
+//   oracleName: "API V2",
+//   oracleAddress: "CCD...",
+//   marketAddress: "CCD...",
+//   vaultAddress: "CCD...",
+//   creatorAddress: "GBBD...",
+//   status: MarketStatus.LIVE,
+//   possibleReturn: 0,
+//   totalAssets: BigInt(100000),
+//   totalShares: BigInt(1000),
+//   riskScore: MarketRiskScore.LOW,
+//   yourShares: BigInt(0),
+//   exercising: "Automatic",
+//   eventTime: new Date(),
+//   type: MarketType.HEDGE,
+//   commissionFee: 2.5,
+// };
 
 type ActionType = "deposit" | "withdraw" | "mint" | "redeem" | null;
 
 export default function MarketDetails() {
-  const market = mockMarket;
-  const { id } = useParams();
   const searchParams = useSearchParams();
-  const vaultAddress = searchParams.get("vault");
-  console.log(id, vaultAddress, "::");
+  const CONTRACT_ID = searchParams.get("market") ?? "";
+  const SIDE = searchParams.get("side") ?? "";
+  console.log(CONTRACT_ID, SIDE);
 
-  // const market = mockMarket; // Replace with actual data fetching
   const [selectedAction, setSelectedAction] = useState<ActionType>(null);
   const [amount, setAmount] = useState<string>("");
   const [ownerAddress, setOwnerAddress] = useState<string>("");
@@ -77,6 +74,7 @@ export default function MarketDetails() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<ParsedSorobanError | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
+  const [market, setMarket] = useState<Market | null>(null);
 
   useEffect(() => {
     const checkFreighter = async () => {
@@ -146,8 +144,50 @@ export default function MarketDetails() {
     const fetchData = async () => {
       try {
         if (isMounted) {
-          if (publicKey && market.assetSymbol) {
-            const bal = await fetchBalance(publicKey, market.assetSymbol);
+          if (publicKey) {
+            const market: MarketDetailsType = (await marketDetails(
+              CONTRACT_ID,
+              publicKey
+            )) as MarketDetailsType;
+            console.log("Market", market);
+
+            if (!market) {
+              // not found
+            }
+
+            const isHedge = SIDE === "HEDGE";
+
+            const marketSide: Market = {
+              id: Math.random().toString(36),
+              name: market.name,
+              description: market.description,
+              assetAddress: market.hedge_asset_address,
+              assetSymbol: market.risk_asset_symbol,
+              oracleAddress: market.oracle_address,
+              oracleName: market.oracle_name,
+              creatorAddress: market.hedge_admin_address,
+              marketAddress: CONTRACT_ID,
+              vaultAddress: market.hedge_address,
+              status: market.status,
+              possibleReturn: 0,
+              totalAssets: market.hedge_total_assets,
+              totalShares: market.hedge_total_shares,
+              riskScore: market.risk_score,
+              yourShares: BigInt(0),
+              exercising: market.is_automatic ? "Automatic" : "Manual",
+              eventTime: DateTimeConverter.convertUnixSecondsToDate(
+                market.event_time
+              ),
+              commissionFee: market.commission_fee,
+              type: isHedge ? MarketType.HEDGE : MarketType.RISK,
+            };
+
+            setMarket(marketSide);
+
+            const bal = await fetchBalance(
+              publicKey,
+              isHedge ? market.hedge_asset_symbol : market.risk_asset_symbol
+            );
             if (bal !== undefined) setBalance(Number(bal.balance));
           }
         }
@@ -162,6 +202,7 @@ export default function MarketDetails() {
   }, [publicKey]);
 
   const calculateReturn = () => {
+    if (!market) return "";
     const inputAmount = parseFloat(amount) || 0;
     return (inputAmount * (1 + market.possibleReturn / 100)).toFixed(2);
   };
@@ -339,7 +380,7 @@ export default function MarketDetails() {
               <div className="text-sm">
                 <span className="text-muted-foreground">Estimated return:</span>
                 <span className="ml-2">
-                  {calculateReturn()} {market.assetSymbol}
+                  {calculateReturn()} {market?.assetSymbol}
                 </span>
               </div>
               <Button onClick={handleConfirm} className="w-full">
@@ -381,13 +422,15 @@ export default function MarketDetails() {
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-2xl">{market.name}</CardTitle>
+                    <CardTitle className="text-2xl">
+                      {market ? market.name : "Loading..."}
+                    </CardTitle>
                     <p className="text-muted-foreground mt-2">
-                      {market.description}
+                      {market?.description}
                     </p>
                   </div>
                   <Badge className="bg-green-500/20 text-green-500">
-                    {MarketStatus[market.status]}
+                    {market && MarketStatus[market.status]}
                   </Badge>
                 </div>
               </CardHeader>
@@ -400,7 +443,7 @@ export default function MarketDetails() {
                     <div className="flex items-center gap-2">
                       <Shield className="h-5 w-5" />
                       <span className="text-lg font-semibold">
-                        {MarketType[market.type]}
+                        {market && MarketType[market.type]}
                       </span>
                     </div>
                   </div>
@@ -413,7 +456,7 @@ export default function MarketDetails() {
                       <span className="text-lg font-semibold">
                         {balance === null
                           ? "Loading..."
-                          : balance + " " + market.assetSymbol}
+                          : balance + " " + market?.assetSymbol}
                       </span>
                     </div>
                   </div>
@@ -425,13 +468,13 @@ export default function MarketDetails() {
                       <div className="flex items-center gap-2 text-sm">
                         <span className="text-muted-foreground">Hedge:</span>
                         <span>
-                          {0} {market.assetSymbol}
+                          {0} {market?.assetSymbol}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <span className="text-muted-foreground">Risk:</span>
                         <span>
-                          {0} {market.assetSymbol}
+                          {0} {market?.assetSymbol}
                         </span>
                       </div>
                     </div>
@@ -443,7 +486,7 @@ export default function MarketDetails() {
                     <div className="flex items-center gap-2">
                       <Calendar className="h-5 w-5" />
                       <span className="text-lg font-semibold">
-                        {format(market.eventTime, "PPp")}
+                        {market && format(market.eventTime, "PPp")}
                       </span>
                     </div>
                   </div>

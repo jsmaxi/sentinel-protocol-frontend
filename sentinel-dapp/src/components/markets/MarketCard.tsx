@@ -1,6 +1,11 @@
 "use client";
 
-import { MarketRiskScore, MarketStatus, Market } from "@/types/market";
+import {
+  MarketRiskScore,
+  MarketStatus,
+  Market,
+  MarketType,
+} from "@/types/market";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Shield, DollarSign, Users, Calendar } from "lucide-react";
@@ -41,7 +46,11 @@ export function MarketCard({ market }: MarketCardProps) {
   };
 
   return (
-    <Link href={`/market/${market.marketAddress}?vault=${market.vaultAddress}`}>
+    <Link
+      href={`/market/${market.id}?market=${market.marketAddress}&side=${
+        MarketType[market.type]
+      }`}
+    >
       <Card className="hover:scale-[1.02] transition-transform duration-200 glass">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-xl font-semibold">{market.name}</CardTitle>
