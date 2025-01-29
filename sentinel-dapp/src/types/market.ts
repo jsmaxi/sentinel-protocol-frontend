@@ -69,11 +69,13 @@ export interface MarketDetailsType {
   hedge_asset_symbol: string,
   hedge_total_shares: bigint,
   hedge_total_assets: bigint,
+  hedge_address_shares: bigint,
   risk_admin_address: string,
   risk_asset_address: string,
   risk_asset_symbol: string,
   risk_total_shares: bigint,
   risk_total_assets: bigint,
+  risk_address_shares: bigint,
 }
 
 export type CreateMarketFormData = {

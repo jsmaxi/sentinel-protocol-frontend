@@ -263,7 +263,7 @@ const App = () => {
                 totalAssets: market.hedge_total_assets,
                 totalShares: market.hedge_total_shares,
                 riskScore: market.risk_score,
-                yourShares: BigInt(0),
+                yourShares: market.hedge_address_shares,
                 exercising: market.is_automatic ? "Automatic" : "Manual",
                 eventTime: DateTimeConverter.convertUnixSecondsToDate(
                   market.event_time
@@ -288,7 +288,7 @@ const App = () => {
                 totalAssets: market.risk_total_assets,
                 totalShares: market.risk_total_shares,
                 riskScore: market.risk_score,
-                yourShares: BigInt(0),
+                yourShares: market.risk_address_shares,
                 exercising: market.is_automatic ? "Automatic" : "Manual",
                 eventTime: DateTimeConverter.convertUnixSecondsToDate(
                   market.event_time

@@ -157,7 +157,9 @@ export default function MarketDetails() {
               totalAssets: market.hedge_total_assets,
               totalShares: market.hedge_total_shares,
               riskScore: market.risk_score,
-              yourShares: BigInt(0),
+              yourShares: isHedge
+                ? market.hedge_address_shares
+                : market.risk_address_shares,
               exercising: market.is_automatic ? "Automatic" : "Manual",
               eventTime: DateTimeConverter.convertUnixSecondsToDate(
                 market.event_time
