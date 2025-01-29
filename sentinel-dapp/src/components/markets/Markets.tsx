@@ -148,8 +148,6 @@ const mockMarkets: Market[] = [
 ];
 */
 
-const markets: Market[] = [];
-
 const App = () => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
@@ -169,6 +167,7 @@ const App = () => {
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<ParsedSorobanError | null>(null);
+  const [markets, setMarkets] = useState<Market[]>([]);
 
   useEffect(() => {
     const checkFreighter = async () => {
@@ -217,6 +216,8 @@ const App = () => {
 
     const fetchData = async () => {
       try {
+        setMarkets([]);
+
         if (isMounted) {
           if (config.marketContracts.length === 0) return;
 
@@ -283,8 +284,11 @@ const App = () => {
                   type: MarketType.RISK,
                 };
 
-                markets.push(marketHedgeSide);
-                markets.push(marketRiskSide);
+                setMarkets((prev) => [
+                  ...prev,
+                  marketHedgeSide,
+                  marketRiskSide,
+                ]);
               } else {
                 // No market found
               }
