@@ -75,3 +75,19 @@ export interface MarketDetailsType {
   risk_total_shares: bigint,
   risk_total_assets: bigint,
 }
+
+export type CreateMarketFormData = {
+  name: string;
+  description: string;
+  eventDate: Date;
+  eventTime: string;
+  asset: string;
+  oracleName: string;
+  oracleAddress: string;
+  commissionFee: number;
+  riskScore: "LOW" | "MEDIUM" | "HIGH" | "UNKNOWN";
+  exercising: "AUTO" | "MANUAL";
+  lockPeriod: number;
+  eventThreshold: number;
+  unlockPeriod: number;
+};

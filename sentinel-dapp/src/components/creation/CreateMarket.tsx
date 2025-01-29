@@ -39,26 +39,12 @@ import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
 import ContactEmail from "../shared/ContactEmail";
-
-type FormData = {
-  name: string;
-  description: string;
-  eventDate: Date;
-  eventTime: string;
-  asset: string;
-  oracleAddress: string;
-  commissionFee: number;
-  riskScore: "LOW" | "MEDIUM" | "HIGH" | "UNKNOWN";
-  exercising: "AUTO" | "MANUAL";
-  lockPeriod: number;
-  eventThreshold: number;
-  unlockPeriod: number;
-};
+import { CreateMarketFormData } from "@/types/market";
 
 const CreateMarket = () => {
   const { toast } = useToast();
   const router = useRouter();
-  const form = useForm<FormData>({
+  const form = useForm<CreateMarketFormData>({
     defaultValues: {
       exercising: "AUTO",
     },
@@ -107,7 +93,7 @@ const CreateMarket = () => {
     }
   };
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = (data: CreateMarketFormData) => {
     const emptyFields = Object.entries(data).filter(([key, value]) => !value);
 
     if (emptyFields.length > 0) {
@@ -197,7 +183,7 @@ const CreateMarket = () => {
                       <FormLabel>Description</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Describe your market"
+                          placeholder="Describe the market"
                           className="resize-none"
                           {...field}
                         />
@@ -251,7 +237,7 @@ const CreateMarket = () => {
                     control={form.control}
                     name="eventTime"
                     render={({ field: { onChange, value, ...field } }) => (
-                      <FormItem>
+                      <FormItem className="space-y-0">
                         <FormLabel>Event Time (UTC)</FormLabel>
                         <FormControl>
                           <Input
@@ -273,7 +259,7 @@ const CreateMarket = () => {
                   name="asset"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Supported Asset</FormLabel>
+                      <FormLabel>Underlying Asset</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
@@ -288,6 +274,21 @@ const CreateMarket = () => {
                           <SelectItem value="XLM">XLM</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Oracle Name */}
+                <FormField
+                  control={form.control}
+                  name="oracleName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Oracle Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter Oracle Name" {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
