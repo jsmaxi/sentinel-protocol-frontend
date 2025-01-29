@@ -216,10 +216,20 @@ const App = () => {
 
     const fetchData = async () => {
       try {
-        setMarkets([]);
-
         if (isMounted) {
-          if (config.marketContracts.length === 0) return;
+          setMarkets([]);
+          setLoading(true);
+          setError(null);
+
+          if (!publicKey) {
+            console.error("Wallet not connected");
+            return;
+          }
+
+          if (config.marketContracts.length === 0) {
+            console.error("No market contracts found");
+            return;
+          }
 
           console.time("Fetch Markets Timer");
 
@@ -298,7 +308,10 @@ const App = () => {
           console.timeEnd("Fetch Markets Timer");
         }
       } catch (error) {
-        console.error(error);
+        console.log("Error loading data.", error);
+        // set error
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -337,41 +350,6 @@ const App = () => {
         return [...prev, marketId];
       }
     });
-  };
-
-  const getContractData = async (
-    operationName: string,
-    contractId: string
-  ): Promise<string | number | bigint> => {
-    try {
-      if (!publicKey) {
-        console.error("Wallet not connected");
-        throw "Wallet not connected";
-      }
-
-      if (!contractId) {
-        console.error("Contract ID missing");
-        throw "Contract ID missing";
-      }
-
-      if (!operationName) {
-        console.error("Operation name missing");
-        throw "Operation name missing";
-      }
-
-      setLoading(true);
-      setError(null);
-
-      // return await simulateTx(publicKey, contractId, operationName);
-      return "";
-    } catch (error) {
-      console.log("Error loading data.", error);
-      alert("Error loading data. Please check the console for details.");
-      // set error
-      throw error;
-    } finally {
-      setLoading(false);
-    }
   };
 
   const filteredMarkets = markets
