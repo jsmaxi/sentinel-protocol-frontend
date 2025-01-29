@@ -49,3 +49,27 @@ export interface AssetBalanceType {
   symbol: string;
   balance: string;
 }
+
+export interface MarketDetailsType {
+  name: string,
+  description: string,
+  status: MarketStatus,
+  hedge_address: string,
+  risk_address: string,
+  oracle_address: string,
+  oracle_name: string,
+  risk_score: MarketRiskScore,
+  event_time: bigint,
+  is_automatic: boolean,
+  commission_fee: number,
+  hedge_admin_address: string,
+  hedge_asset_address: string,
+  hedge_asset_symbol: string,
+  hedge_total_shares: bigint,
+  hedge_total_assets: bigint,
+  risk_admin_address: string,
+  risk_asset_address: string,
+  risk_asset_symbol: string,
+  risk_total_shares: bigint,
+  risk_total_assets: bigint,
+}

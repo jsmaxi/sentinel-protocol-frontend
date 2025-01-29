@@ -47,6 +47,7 @@ import {
   MarketType,
   MarketTypeString,
   Market,
+  MarketDetailsType,
 } from "@/types/market";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
@@ -60,6 +61,7 @@ import NetworkInfo from "../shared/NetworkInfo";
 import config from "../../config/markets.json";
 import ContactEmail from "../shared/ContactEmail";
 import { DateTimeConverter } from "@/utils/DateTimeConverter";
+import { marketDetails } from "@/utils/MarketContractCaller";
 
 /*
 const mockMarkets: Market[] = [
@@ -218,124 +220,74 @@ const App = () => {
         if (isMounted) {
           if (config.marketContracts.length === 0) return;
 
+          console.time("Fetch Markets Timer");
+
           for (let i = 0; i < config.marketContracts.length; i++) {
             const CONTRACT_ID = config.marketContracts[i];
-            const name = (await getContractData("name", CONTRACT_ID)) as string;
-            const desc = (await getContractData(
-              "description",
-              CONTRACT_ID
-            )) as string;
-            const hedgeVault = (await getContractData(
-              "hedge_address",
-              CONTRACT_ID
-            )) as string;
-            const riskVault = (await getContractData(
-              "risk_address",
-              CONTRACT_ID
-            )) as string;
-            const asset = (await getContractData(
-              "asset_address",
-              hedgeVault
-            )) as string;
-            const assetSymbol = (await getContractData(
-              "asset_symbol",
-              hedgeVault
-            )) as string;
-            const oracle = (await getContractData(
-              "oracle_address",
-              CONTRACT_ID
-            )) as string;
-            const oracleName = (await getContractData(
-              "oracle_name",
-              CONTRACT_ID
-            )) as string;
-            const admin = (await getContractData(
-              "administrator_address",
-              hedgeVault
-            )) as string;
-            const status = (await getContractData(
-              "status",
-              CONTRACT_ID
-            )) as number;
-            const riskScore = (await getContractData(
-              "risk_score",
-              CONTRACT_ID
-            )) as number;
-            const eventTime = (await getContractData(
-              "expected_time_of_event",
-              CONTRACT_ID
-            )) as bigint;
-            const exercising = (await getContractData(
-              "exercising",
-              CONTRACT_ID
-            )) as string;
-            const hedgeAssets = (await getContractData(
-              "total_assets",
-              hedgeVault
-            )) as bigint;
-            const hedgeShares = (await getContractData(
-              "total_shares",
-              hedgeVault
-            )) as bigint;
-            const riskAssets = (await getContractData(
-              "total_assets",
-              riskVault
-            )) as bigint;
-            const riskShares = (await getContractData(
-              "total_shares",
-              riskVault
-            )) as bigint;
-            const yourShares = BigInt(0); // TODO
 
-            const marketHedgeSide: Market = {
-              id: Math.random().toString(36),
-              name: name,
-              description: desc,
-              assetAddress: asset,
-              assetSymbol: assetSymbol,
-              oracleAddress: oracle,
-              oracleName: oracleName,
-              creatorAddress: admin,
-              vaultAddress: hedgeVault,
-              status: status,
-              possibleReturn: 0,
-              totalAssets: hedgeShares,
-              totalShares: hedgeAssets,
-              riskScore: riskScore,
-              yourShares: yourShares,
-              exercising: exercising,
-              eventTime: DateTimeConverter.convertUnixSecondsToDate(eventTime),
-              type: MarketType.HEDGE,
-            };
+            if (publicKey) {
+              const market: MarketDetailsType = (await marketDetails(
+                CONTRACT_ID,
+                publicKey
+              )) as MarketDetailsType;
+              console.log("Market", market);
 
-            console.log("HEDGE MARKET", marketHedgeSide);
+              if (market) {
+                const marketHedgeSide: Market = {
+                  id: Math.random().toString(36),
+                  name: market.name,
+                  description: market.description,
+                  assetAddress: market.hedge_asset_address,
+                  assetSymbol: market.risk_asset_symbol,
+                  oracleAddress: market.oracle_address,
+                  oracleName: market.oracle_name,
+                  creatorAddress: market.hedge_admin_address,
+                  vaultAddress: market.hedge_address,
+                  status: market.status,
+                  possibleReturn: 0,
+                  totalAssets: market.hedge_total_assets,
+                  totalShares: market.hedge_total_shares,
+                  riskScore: market.risk_score,
+                  yourShares: BigInt(0),
+                  exercising: market.is_automatic ? "Automatic" : "Manual",
+                  eventTime: DateTimeConverter.convertUnixSecondsToDate(
+                    market.event_time
+                  ),
+                  type: MarketType.HEDGE,
+                };
 
-            const marketRiskSide: Market = {
-              id: Math.random().toString(36),
-              name: name,
-              description: desc,
-              assetAddress: asset,
-              assetSymbol: assetSymbol,
-              oracleAddress: oracle,
-              oracleName: oracleName,
-              creatorAddress: admin,
-              vaultAddress: riskVault,
-              status: status,
-              possibleReturn: 0,
-              totalAssets: riskShares,
-              totalShares: riskAssets,
-              riskScore: riskScore,
-              yourShares: yourShares,
-              exercising: exercising,
-              eventTime: DateTimeConverter.convertUnixSecondsToDate(eventTime),
-              type: MarketType.RISK,
-            };
+                const marketRiskSide: Market = {
+                  id: Math.random().toString(36),
+                  name: market.name,
+                  description: market.description,
+                  assetAddress: market.risk_asset_address,
+                  assetSymbol: market.risk_asset_symbol,
+                  oracleAddress: market.oracle_address,
+                  oracleName: market.oracle_name,
+                  creatorAddress: market.risk_admin_address,
+                  vaultAddress: market.risk_address,
+                  status: market.status,
+                  possibleReturn: 0,
+                  totalAssets: market.risk_total_assets,
+                  totalShares: market.risk_total_shares,
+                  riskScore: market.risk_score,
+                  yourShares: BigInt(0),
+                  exercising: market.is_automatic ? "Automatic" : "Manual",
+                  eventTime: DateTimeConverter.convertUnixSecondsToDate(
+                    market.event_time
+                  ),
+                  type: MarketType.RISK,
+                };
 
-            console.log("RISK MARKET", marketRiskSide);
-
-            markets.push(marketHedgeSide);
-            markets.push(marketRiskSide);
+                markets.push(marketHedgeSide);
+                markets.push(marketRiskSide);
+              } else {
+                // No market found
+              }
+            }
           }
+
+          console.timeEnd("Fetch Markets Timer");
         }
       } catch (error) {
         console.error(error);

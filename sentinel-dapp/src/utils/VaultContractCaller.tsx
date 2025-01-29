@@ -9,22 +9,22 @@ import {
   prepareTransferShares,
   prepareWithdrawVault,
   sendTx,
-  simulateTotalShares,
+  simulateGetAction,
   simulateTotalSharesOf,
 } from "@/actions/serverActions";
 
 export async function totalShares(
   vaultAddress: string,
   caller: string
-): Promise<string | number | bigint> {
-  return await simulateTotalShares(vaultAddress, "total_shares", caller);
+): Promise<string | number | bigint | object> {
+  return await simulateGetAction(vaultAddress, "total_shares", caller);
 }
 
 export async function totalSharesOf(
   vaultAddress: string,
   caller: string,
   address: string
-): Promise<string | number | bigint> {
+): Promise<string | number | bigint | object> {
   return await simulateTotalSharesOf(
     vaultAddress,
     "balance_of_shares",

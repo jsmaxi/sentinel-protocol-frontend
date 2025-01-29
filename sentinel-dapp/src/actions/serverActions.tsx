@@ -96,7 +96,7 @@ async function simulateTx(
   contractId: string,
   operationName: string,
   operationParams?: xdr.ScVal[]
-): Promise<string | number | bigint> {
+): Promise<string | number | bigint | object> {
   // console.log("[server] Simulate transaction");
 
   const account = await SERVER.getAccount(publicKey);
@@ -164,11 +164,11 @@ export async function fetchBalances(
   return mappedBalances;
 }
 
-export async function simulateTotalShares(
+export async function simulateGetAction(
   contractId: string,
   operationName: string,
   caller: string
-): Promise<string | number | bigint> {
+): Promise<string | number | bigint | object> {
   return await simulateTx(caller, contractId, operationName);
 }
 
@@ -177,7 +177,7 @@ export async function simulateTotalSharesOf(
   operationName: string,
   caller: string,
   address: string
-): Promise<string | number | bigint> {
+): Promise<string | number | bigint | object> {
   const params = [SorobanTypeConverter.stringToAddress(address)];
   return await simulateTx(caller, contractId, operationName, params);
 }
