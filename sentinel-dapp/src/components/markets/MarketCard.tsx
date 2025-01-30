@@ -67,7 +67,9 @@ export function MarketCard({ market }: MarketCardProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center gap-2" title="Asset">
               <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">{market.assetSymbol}</span>
+              <span className="text-sm">
+                {market.assetSymbol === "native" ? "XLM" : market.assetSymbol}
+              </span>
             </div>
             <div className="flex items-center gap-2" title="Risk score">
               <Shield className="h-4 w-4 text-muted-foreground" />

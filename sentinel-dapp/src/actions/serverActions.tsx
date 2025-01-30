@@ -170,6 +170,7 @@ export async function fetchBalance(
   assetSymbol: string
 ): Promise<AssetBalanceType | undefined> {
   const balances = await fetchBalances(publicKey);
+  if (assetSymbol === "native") return balances.find((b) => b.symbol === "XLM");
   return balances.find((b) => b.symbol === assetSymbol);
 }
 

@@ -72,7 +72,7 @@ export default function MarketDetails() {
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<ParsedSorobanError | null>(null);
-  const [balance, setBalance] = useState<number | null>(null);
+  const [balance, setBalance] = useState<number | null | undefined>(null);
   const [market, setMarket] = useState<Market | null>(null);
   const [refetchMarket, setRefetchMarket] = useState<boolean>(false);
 
@@ -185,6 +185,7 @@ export default function MarketDetails() {
               isHedge ? market.hedge_asset_symbol : market.risk_asset_symbol
             );
             if (bal !== undefined) setBalance(Number(bal.balance));
+            else setBalance(undefined);
           }
         }
       } catch (error) {
@@ -209,7 +210,9 @@ export default function MarketDetails() {
 
   const handlePercentageClick = (percentage: number) => {
     const value =
-      balance === null ? "" : ((balance * percentage) / 100).toString();
+      balance === null || balance === undefined
+        ? ""
+        : ((balance * percentage) / 100).toString();
     setAmount(value);
   };
 
@@ -445,7 +448,13 @@ export default function MarketDetails() {
                       <span className="text-lg font-semibold">
                         {balance === null
                           ? "Loading..."
-                          : balance + " " + market?.assetSymbol}
+                          : balance === undefined
+                          ? "Unknown"
+                          : balance +
+                            " " +
+                            (market?.assetSymbol === "native"
+                              ? "XLM"
+                              : market?.assetSymbol)}
                       </span>
                     </div>
                   </div>
@@ -457,13 +466,19 @@ export default function MarketDetails() {
                       <div className="flex items-center gap-2 text-sm">
                         <span className="text-muted-foreground">Total:</span>
                         <span>
-                          {market?.totalShares} {market?.assetSymbol}
+                          {market?.totalShares}{" "}
+                          {market?.assetSymbol === "native"
+                            ? "XLM"
+                            : market?.assetSymbol}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <span className="text-muted-foreground">Your:</span>
                         <span>
-                          {market?.yourShares} {market?.assetSymbol}
+                          {market?.yourShares}{" "}
+                          {market?.assetSymbol === "native"
+                            ? "XLM"
+                            : market?.assetSymbol}
                         </span>
                       </div>
                     </div>
