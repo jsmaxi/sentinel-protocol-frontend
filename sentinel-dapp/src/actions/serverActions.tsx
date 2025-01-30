@@ -181,6 +181,40 @@ export async function fetchBalance(
   return balances.find((b) => b.symbol === assetSymbol);
 }
 
+export async function fetchAssetPriceByCodes(
+  baseAssetCode: string,
+  quoteAssetCode: string
+): Promise<PriceResponse> {
+  // Currently we only support a list of configured trusted asset issuers
+  // const server = new Horizon.Server(config.horizonRpcUrl);
+
+  let issuer1 = "";
+  let issuer2 = "";
+
+  if (baseAssetCode !== "native") {
+    // const asset1 = await server.assets().forCode(baseAssetCode).call();
+    // issuer1 = asset1?.records[0]?.asset_issuer;
+    // console.log(baseAssetCode, issuer1);
+    issuer1 =
+      config.assetIssuers.find((a) => a.code === baseAssetCode)?.issuer ?? "";
+    if (!issuer1) throw "Unable to retrieve base asset issuer";
+  }
+
+  if (quoteAssetCode !== "native") {
+    // const asset2 = await server.assets().forCode(quoteAssetCode).call();
+    // issuer2 = asset2?.records[0]?.asset_issuer;
+    // console.log(quoteAssetCode, issuer2);
+    issuer2 =
+      config.assetIssuers.find((a) => a.code === quoteAssetCode)?.issuer ?? "";
+    if (!issuer2) throw "Unable to retrieve quote asset issuer";
+  }
+
+  return fetchAssetPrice(
+    { code: baseAssetCode, issuer: issuer1 },
+    { code: quoteAssetCode, issuer: issuer2 }
+  );
+}
+
 export async function fetchAssetPrice(
   baseAsset: PriceAsset,
   quoteAsset: PriceAsset
@@ -188,12 +222,12 @@ export async function fetchAssetPrice(
   const server = new Horizon.Server(config.horizonRpcUrl);
 
   let selling =
-    baseAsset.code === "XLM" && !baseAsset.issuer
+    baseAsset.code === "native" && !baseAsset.issuer
       ? Asset.native()
       : new Asset(baseAsset.code, baseAsset.issuer);
 
   let buying =
-    quoteAsset.code === "XLM" && !quoteAsset.issuer
+    quoteAsset.code === "native" && !quoteAsset.issuer
       ? Asset.native()
       : new Asset(quoteAsset.code, quoteAsset.issuer);
 
@@ -202,7 +236,7 @@ export async function fetchAssetPrice(
   const bestBid = orderbook.bids[0]?.price || "0";
   const bestAsk = orderbook.asks[0]?.price || "0";
 
-  const midPrice = ((Number(bestBid) + Number(bestAsk)) / 2).toString();
+  const midPrice = ((Number(bestBid) + Number(bestAsk)) / 2).toFixed(5);
   const spread = (Number(bestAsk) - Number(bestBid)).toString();
 
   return {

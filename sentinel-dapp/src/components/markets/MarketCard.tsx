@@ -5,18 +5,46 @@ import {
   MarketStatus,
   Market,
   MarketType,
+  PriceAsset,
 } from "@/types/market";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Shield, DollarSign, Users, Calendar } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import {
+  fetchAssetPrice,
+  fetchAssetPriceByCodes,
+} from "@/actions/serverActions";
 
 interface MarketCardProps {
   market: Market;
 }
 
 export function MarketCard({ market }: MarketCardProps) {
+  const [assetPrice, setAssetPrice] = useState<string>("");
+
+  useEffect(() => {
+    const fetchPrice = async () => {
+      try {
+        if (market.assetSymbol === "USDC") {
+          setAssetPrice("");
+          return;
+        }
+        const price = await fetchAssetPriceByCodes(market.assetSymbol, "USDC");
+        console.log(market.assetSymbol, price);
+        const midPrice = price.midPrice;
+        setAssetPrice(midPrice);
+      } catch (error) {
+        console.log("Error fetching price", error);
+        // ignore
+      }
+    };
+
+    fetchPrice();
+  }, []);
+
   const getRiskColor = (risk: Market["riskScore"]) => {
     switch (risk) {
       case MarketRiskScore.LOW:
@@ -68,12 +96,20 @@ export function MarketCard({ market }: MarketCardProps) {
           <p className="text-sm text-muted-foreground">{market.description}</p>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center gap-2" title="Asset">
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">
-                {market.assetSymbol === "native" ? "XLM" : market.assetSymbol}
-              </span>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2" title="Asset">
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">
+                  {market.assetSymbol === "native" ? "XLM" : market.assetSymbol}
+                </span>
+              </div>
+              {assetPrice && (
+                <span className="text-sm text-muted-foreground">
+                  (${assetPrice})
+                </span>
+              )}
             </div>
+
             <div className="flex items-center gap-2" title="Risk score">
               <Shield className="h-4 w-4 text-muted-foreground" />
               <Badge className={getRiskColor(market.riskScore)}>

@@ -48,14 +48,10 @@ import {
   MarketTypeString,
   Market,
   MarketDetailsType,
-  PriceAsset,
 } from "@/types/market";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
-import {
-  ParsedSorobanError,
-  SorobanErrorParser,
-} from "../../utils/SorobanErrorParser";
+import { ParsedSorobanError } from "../../utils/SorobanErrorParser";
 import Processing from "../shared/Processing";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
@@ -63,8 +59,8 @@ import config from "../../config/markets.json";
 import ContactEmail from "../shared/ContactEmail";
 import { DateTimeConverter } from "@/utils/DateTimeConverter";
 import { marketDetails } from "@/utils/MarketContractCaller";
-import { formatLargeNumber } from "@/utils/LargeNumberFormatter";
-import { fetchAssetPrice } from "@/actions/serverActions";
+import { formatNumber } from "@/utils/LargeNumberFormatter";
+import { fetchAssetPriceByCodes } from "@/actions/serverActions";
 
 /*
 const mockMarkets: Market[] = [
@@ -172,7 +168,9 @@ const App = () => {
   const [error, setError] = useState<ParsedSorobanError | null>(null);
   const [markets, setMarkets] = useState<Market[]>([]);
   const [activeMarkets, setActiveMarkets] = useState<number>(0);
-  const [tvl, setTvl] = useState<bigint>(BigInt(0));
+  const [tvl, setTvl] = useState<number>(0);
+  const [liduidatedPercentage, setLiquidatedPercentage] = useState<string>("?");
+  const [maturedMarkets, setMaturedMarkets] = useState<string>("?");
 
   useEffect(() => {
     const checkFreighter = async () => {
@@ -224,7 +222,9 @@ const App = () => {
         if (isMounted) {
           setMarkets([]);
           setActiveMarkets(0);
-          setTvl(BigInt(0));
+          setTvl(0);
+          setLiquidatedPercentage("?");
+          setMaturedMarkets("?");
           setLoading(true);
           setError(null);
 
@@ -240,8 +240,10 @@ const App = () => {
 
           console.time("Fetch Markets Timer");
 
-          let marketsCount = 0;
-          let totalValue = BigInt(0);
+          let activeMarketsCount = 0;
+          let maturedCount = 0;
+          let liquodatedCount = 0;
+          let totalValue = 0;
 
           for (let i = 0; i < config.marketContracts.length; i++) {
             const CONTRACT_ID = config.marketContracts[i];
@@ -306,28 +308,62 @@ const App = () => {
               setMarkets((prev) => [...prev, marketHedgeSide, marketRiskSide]);
 
               if (market.status === MarketStatus.LIVE) {
-                marketsCount++;
+                activeMarketsCount++;
+              } else if (
+                market.status === MarketStatus.MATURE ||
+                market.status === MarketStatus.MATURED
+              ) {
+                maturedCount++;
+              } else if (
+                market.status === MarketStatus.LIQUIDATE ||
+                market.status === MarketStatus.LIQUIDATED
+              ) {
+                liquodatedCount++;
               }
 
-              /// TODO: non-usd assets first need to be priced and converted before adding them.
-              const baseAsset: PriceAsset = { code: "XLM", issuer: "" };
-              const quoteAsset: PriceAsset = {
-                code: "USDC",
-                issuer:
-                  "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5", // PROD: GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN ; TEST: GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5 ; change horizonRpcUrl
-              };
-              const test = await fetchAssetPrice(baseAsset, quoteAsset);
-              console.log("TEST PRICE", Number(test.midPrice).toFixed(5), test);
-              ///
+              // non-usd assets first need to be priced and converted before adding them.
 
-              totalValue +=
-                market.hedge_total_assets + market.risk_total_assets;
+              if (market.hedge_asset_symbol === "USDC") {
+                totalValue += Number(market.hedge_total_assets);
+              } else {
+                try {
+                  const price = await fetchAssetPriceByCodes(
+                    market.hedge_asset_symbol,
+                    "USDC"
+                  );
+                  const midPrice = Number(price.midPrice);
+                  totalValue += midPrice * Number(market.hedge_total_assets);
+                } catch (e) {
+                  console.log(e);
+                  // ignore
+                }
+              }
+
+              if (market.risk_asset_symbol === "USDC") {
+                totalValue += Number(market.risk_total_assets);
+              } else {
+                try {
+                  const price = await fetchAssetPriceByCodes(
+                    market.risk_asset_symbol,
+                    "USDC"
+                  );
+                  const midPrice = Number(price.midPrice);
+                  totalValue += midPrice * Number(market.risk_total_assets);
+                } catch (e) {
+                  console.log(e);
+                  // ignore
+                }
+              }
             } else {
               // No market found
             }
           }
 
-          setActiveMarkets(marketsCount);
+          setActiveMarkets(activeMarketsCount);
+          setMaturedMarkets(maturedCount.toString());
+          setLiquidatedPercentage(
+            ((liquodatedCount / markets.length) * 100).toFixed(0)
+          );
           setTvl(totalValue);
 
           console.timeEnd("Fetch Markets Timer");
@@ -360,21 +396,25 @@ const App = () => {
   };
 
   const handleSaveMarket = (marketId: string) => {
+    let removed = false;
     setSavedMarkets((prev) => {
       if (prev.includes(marketId)) {
-        toast({
-          title: "Market Removed",
-          description: "Market has been removed from your saved list.",
-        });
+        removed = true;
         return prev.filter((id) => id !== marketId);
       } else {
-        toast({
-          title: "Market Saved",
-          description: "Market has been added to your saved list.",
-        });
         return [...prev, marketId];
       }
     });
+    if (removed)
+      toast({
+        title: "Market Removed",
+        description: "Market has been removed from your saved list.",
+      });
+    else
+      toast({
+        title: "Market Saved",
+        description: "Market has been added to your saved list.",
+      });
   };
 
   const filteredMarkets = markets
@@ -413,7 +453,6 @@ const App = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Background Ornaments */}
       <div className="absolute inset-0 bg-grid animate-grid-flow opacity-10" />
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
@@ -525,7 +564,7 @@ const App = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        ${formatLargeNumber(tvl)}
+                        ${formatNumber(tvl)}
                       </div>
                     </CardContent>
                   </Card>
@@ -548,7 +587,9 @@ const App = () => {
                       <Percent className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">25%</div>
+                      <div className="text-2xl font-bold">
+                        {liduidatedPercentage}%
+                      </div>
                     </CardContent>
                   </Card>
                   <Card className="glass hover:scale-105 transition-transform">
@@ -559,7 +600,7 @@ const App = () => {
                       <Plane className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">5</div>
+                      <div className="text-2xl font-bold">{maturedMarkets}</div>
                     </CardContent>
                   </Card>
                 </div>
