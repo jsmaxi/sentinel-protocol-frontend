@@ -1,6 +1,7 @@
 "use server";
 
 import {
+  Asset,
   BASE_FEE,
   Contract,
   Horizon,
@@ -13,7 +14,7 @@ import {
 import { Api, Server } from "@stellar/stellar-sdk/rpc";
 import config from "../config/markets.json";
 import { SorobanTypeConverter } from "@/utils/SorobanTypeConverter";
-import { AssetBalanceType } from "@/types/market";
+import { AssetBalanceType, PriceAsset, PriceResponse } from "@/types/market";
 
 const SERVER = new Server(config.sorobanRpcUrl);
 const NETWORK = config.isTestnet ? Networks.TESTNET : Networks.PUBLIC;
@@ -170,6 +171,41 @@ export async function fetchBalance(
 ): Promise<AssetBalanceType | undefined> {
   const balances = await fetchBalances(publicKey);
   return balances.find((b) => b.symbol === assetSymbol);
+}
+
+export async function fetchAssetPrice(
+  baseAsset: PriceAsset,
+  quoteAsset: PriceAsset
+): Promise<PriceResponse> {
+  const server = new Horizon.Server(config.horizonRpcUrl);
+
+  let selling =
+    baseAsset.code === "XLM" && !baseAsset.issuer
+      ? Asset.native()
+      : new Asset(baseAsset.code, baseAsset.issuer);
+
+  let buying =
+    quoteAsset.code === "XLM" && !quoteAsset.issuer
+      ? Asset.native()
+      : new Asset(quoteAsset.code, quoteAsset.issuer);
+
+  const orderbook = await server.orderbook(selling, buying).call();
+
+  const bestBid = orderbook.bids[0]?.price || "0";
+  const bestAsk = orderbook.asks[0]?.price || "0";
+
+  const midPrice = ((Number(bestBid) + Number(bestAsk)) / 2).toString();
+  const spread = (Number(bestAsk) - Number(bestBid)).toString();
+
+  return {
+    baseAsset: baseAsset.code,
+    quoteAsset: quoteAsset.code,
+    bestBid,
+    bestAsk,
+    midPrice,
+    spread,
+    lastUpdated: new Date(),
+  };
 }
 
 export async function simulateGetAction(

@@ -48,6 +48,7 @@ import {
   MarketTypeString,
   Market,
   MarketDetailsType,
+  PriceAsset,
 } from "@/types/market";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
@@ -62,6 +63,8 @@ import config from "../../config/markets.json";
 import ContactEmail from "../shared/ContactEmail";
 import { DateTimeConverter } from "@/utils/DateTimeConverter";
 import { marketDetails } from "@/utils/MarketContractCaller";
+import { formatLargeNumber } from "@/utils/LargeNumberFormatter";
+import { fetchAssetPrice } from "@/actions/serverActions";
 
 /*
 const mockMarkets: Market[] = [
@@ -169,6 +172,7 @@ const App = () => {
   const [error, setError] = useState<ParsedSorobanError | null>(null);
   const [markets, setMarkets] = useState<Market[]>([]);
   const [activeMarkets, setActiveMarkets] = useState<number>(0);
+  const [tvl, setTvl] = useState<bigint>(BigInt(0));
 
   useEffect(() => {
     const checkFreighter = async () => {
@@ -220,6 +224,7 @@ const App = () => {
         if (isMounted) {
           setMarkets([]);
           setActiveMarkets(0);
+          setTvl(BigInt(0));
           setLoading(true);
           setError(null);
 
@@ -236,6 +241,7 @@ const App = () => {
           console.time("Fetch Markets Timer");
 
           let marketsCount = 0;
+          let totalValue = BigInt(0);
 
           for (let i = 0; i < config.marketContracts.length; i++) {
             const CONTRACT_ID = config.marketContracts[i];
@@ -302,12 +308,27 @@ const App = () => {
               if (market.status === MarketStatus.LIVE) {
                 marketsCount++;
               }
+
+              /// TODO: non-usd assets first need to be priced and converted before adding them.
+              const baseAsset: PriceAsset = { code: "XLM", issuer: "" };
+              const quoteAsset: PriceAsset = {
+                code: "USDC",
+                issuer:
+                  "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5", // PROD: GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN ; TEST: GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5 ; change horizonRpcUrl
+              };
+              const test = await fetchAssetPrice(baseAsset, quoteAsset);
+              console.log("TEST PRICE", Number(test.midPrice).toFixed(5), test);
+              ///
+
+              totalValue +=
+                market.hedge_total_assets + market.risk_total_assets;
             } else {
               // No market found
             }
           }
 
           setActiveMarkets(marketsCount);
+          setTvl(totalValue);
 
           console.timeEnd("Fetch Markets Timer");
         }
@@ -503,7 +524,9 @@ const App = () => {
                       <Wallet className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">$2.2k</div>
+                      <div className="text-2xl font-bold">
+                        ${formatLargeNumber(tvl)}
+                      </div>
                     </CardContent>
                   </Card>
                   <Card className="glass hover:scale-105 transition-transform">

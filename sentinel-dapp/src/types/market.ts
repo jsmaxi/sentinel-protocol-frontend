@@ -93,3 +93,30 @@ export type CreateMarketFormData = {
   eventThreshold: number;
   unlockPeriod: number;
 };
+
+/*
+// Price Asset Example:
+baseAsset = {
+  code: "XLM",
+  issuer: "", // native asset
+},
+quoteAsset = {
+  code: "USDC",
+  issuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+},
+*/
+
+export interface PriceAsset {
+  code: string,
+  issuer: string,
+}
+
+export interface PriceResponse {
+  baseAsset: string,
+  quoteAsset: string,
+  bestBid: string,
+  bestAsk: string,
+  midPrice : string,
+  spread: string,
+  lastUpdated: Date,
+}
