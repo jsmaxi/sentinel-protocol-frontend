@@ -8,14 +8,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Shield, Calendar, Wallet } from "lucide-react";
+import {
+  Shield,
+  Calendar,
+  Wallet,
+  BadgeHelp,
+  User,
+  DiamondPercent,
+  Coins,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
-import Processing from "../shared/Processing";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
 import ContactEmail from "../shared/ContactEmail";
@@ -32,6 +39,7 @@ import { DateTimeConverter } from "@/utils/DateTimeConverter";
 import { marketDetails } from "@/utils/MarketContractCaller";
 import LoadingAnimation from "../shared/LoadingAnimation";
 import { useToast } from "@/hooks/use-toast";
+import config from "../../config/markets.json";
 
 // const mockMarket: Market = {
 //   id: "1",
@@ -57,6 +65,8 @@ import { useToast } from "@/hooks/use-toast";
 // };
 
 type ActionType = "deposit" | "withdraw" | "mint" | "redeem" | null;
+
+const explorer = config.accountExplorer;
 
 export default function MarketDetails() {
   const searchParams = useSearchParams();
@@ -473,165 +483,247 @@ export default function MarketDetails() {
         </div>
 
         {publicKey ? (
-          <Card className="glass">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-2xl">
-                    {market ? market.name : "Loading..."}
-                  </CardTitle>
-                  <p className="text-muted-foreground mt-2">
-                    {market?.description}
-                  </p>
-                </div>
-                <Badge className="bg-green-500/20 text-green-500">
-                  {market && MarketStatus[market.status]}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <span className="text-sm text-muted-foreground">
-                    Selected Side
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    <span className="text-lg font-semibold">
-                      {market && MarketType[market.type]}
-                    </span>
+          <>
+            <Card className="glass">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-2xl">
+                      {market ? market.name : "Loading..."}
+                    </CardTitle>
+                    <p className="text-muted-foreground mt-2">
+                      {market?.description}
+                    </p>
                   </div>
+                  <Badge className="bg-green-500/20 text-green-500">
+                    {market && MarketStatus[market.status]}
+                  </Badge>
                 </div>
-                <div className="space-y-2">
-                  <span className="text-sm text-muted-foreground">
-                    Wallet Balance
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Wallet className="h-5 w-5" />
-                    <span className="text-lg font-semibold">
-                      {balance === null
-                        ? "Loading..."
-                        : balance === undefined
-                        ? "Unknown"
-                        : balance +
-                          " " +
-                          (market?.assetSymbol === "native"
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* Primary Info */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 lg:gap-4">
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">
+                      Selected Side
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      <span className="text-lg font-semibold">
+                        {market && MarketType[market.type]}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">
+                      Wallet Balance
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Wallet className="h-5 w-5" />
+                      <span className="text-lg font-semibold">
+                        {balance === null
+                          ? "Loading..."
+                          : balance === undefined
+                          ? "Unknown"
+                          : balance.toFixed(5) +
+                            " " +
+                            (market?.assetSymbol === "native"
+                              ? "XLM"
+                              : market?.assetSymbol)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">
+                      Vault Shares
+                    </span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-muted-foreground">Total:</span>
+                        <span>
+                          {market?.totalShares}{" "}
+                          {market?.assetSymbol === "native"
                             ? "XLM"
-                            : market?.assetSymbol)}
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <span className="text-sm text-muted-foreground">
-                    Vault Shares
-                  </span>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-muted-foreground">Total:</span>
-                      <span>
-                        {market?.totalShares}{" "}
-                        {market?.assetSymbol === "native"
-                          ? "XLM"
-                          : market?.assetSymbol}
-                      </span>
+                            : market?.assetSymbol}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-muted-foreground">Your:</span>
+                        <span>
+                          {market?.yourShares}{" "}
+                          {market?.assetSymbol === "native"
+                            ? "XLM"
+                            : market?.assetSymbol}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-muted-foreground">Your:</span>
-                      <span>
-                        {market?.yourShares}{" "}
-                        {market?.assetSymbol === "native"
-                          ? "XLM"
-                          : market?.assetSymbol}
+                  </div>
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">
+                      Event Time
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      <span className="text-lg font-semibold">
+                        {market && format(market.eventTime, "PPp")}
                       </span>
                     </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <span className="text-sm text-muted-foreground">
-                    Event Time
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    <span className="text-lg font-semibold">
-                      {market && format(market.eventTime, "PPp")}
+
+                {/* Secondary Info */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gab-2 lg:gap-4">
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">
+                      Oracle
                     </span>
+                    <div className="flex items-center gap-2">
+                      <BadgeHelp className="h-5 w-5" />
+                      <span className="text-md font-semibold hover:text-primary hover:underline">
+                        {market && (
+                          <Link
+                            href={explorer + market.oracleAddress}
+                            target="_blank"
+                          >
+                            {market.oracleName}
+                          </Link>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">Admin</span>
+                    <div className="flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      <span className="text-md font-semibold hover:text-primary hover:underline">
+                        {market && (
+                          <Link
+                            href={explorer + market.creatorAddress}
+                            target="_blank"
+                          >
+                            {market.creatorAddress.slice(0, 4)}...
+                            {market.creatorAddress.slice(-4)}
+                          </Link>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">
+                      Commission Fee
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <DiamondPercent className="h-5 w-5" />
+                      <span className="text-md font-semibold">
+                        {market && market.commissionFee + "%"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">Asset</span>
+                    <div className="flex items-center gap-2">
+                      <Coins className="h-5 w-5" />
+                      <span className="text-md font-semibold hover:text-primary hover:underline">
+                        {market && (
+                          <Link
+                            href={explorer + market.assetAddress}
+                            target="_blank"
+                          >
+                            {market.assetAddress.slice(0, 4)}...
+                            {market.assetAddress.slice(-4)}
+                          </Link>
+                        )}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Button
-                  size="lg"
-                  className="w-full"
-                  variant={selectedAction === "deposit" ? "default" : "outline"}
-                  disabled={loading}
-                  onClick={() =>
-                    setSelectedAction(
-                      selectedAction === "deposit" ? null : "deposit"
-                    )
-                  }
-                >
-                  {loading && <LoadingAnimation />}
-                  Deposit
-                </Button>
-                <Button
-                  size="lg"
-                  variant={selectedAction === "mint" ? "default" : "outline"}
-                  className="w-full"
-                  disabled={loading}
-                  onClick={() =>
-                    setSelectedAction(selectedAction === "mint" ? null : "mint")
-                  }
-                >
-                  {loading && <LoadingAnimation />}
-                  Mint
-                </Button>
-                <Button
-                  size="lg"
-                  variant={
-                    selectedAction === "withdraw" ? "default" : "outline"
-                  }
-                  className="w-full"
-                  disabled={loading}
-                  onClick={() =>
-                    setSelectedAction(
-                      selectedAction === "withdraw" ? null : "withdraw"
-                    )
-                  }
-                >
-                  {loading && <LoadingAnimation />}
-                  Withdraw
-                </Button>
-                <Button
-                  size="lg"
-                  variant={selectedAction === "redeem" ? "default" : "outline"}
-                  className="w-full"
-                  disabled={loading}
-                  onClick={() =>
-                    setSelectedAction(
-                      selectedAction === "redeem" ? null : "redeem"
-                    )
-                  }
-                >
-                  {loading && <LoadingAnimation />}
-                  Redeem
-                </Button>
-              </div>
+                {/* Actions */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Button
+                    size="lg"
+                    className="w-full"
+                    variant={
+                      selectedAction === "deposit" ? "default" : "outline"
+                    }
+                    disabled={loading}
+                    onClick={() =>
+                      setSelectedAction(
+                        selectedAction === "deposit" ? null : "deposit"
+                      )
+                    }
+                  >
+                    {loading && <LoadingAnimation />}
+                    Deposit
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant={selectedAction === "mint" ? "default" : "outline"}
+                    className="w-full"
+                    disabled={loading}
+                    onClick={() =>
+                      setSelectedAction(
+                        selectedAction === "mint" ? null : "mint"
+                      )
+                    }
+                  >
+                    {loading && <LoadingAnimation />}
+                    Mint
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant={
+                      selectedAction === "withdraw" ? "default" : "outline"
+                    }
+                    className="w-full"
+                    disabled={loading}
+                    onClick={() =>
+                      setSelectedAction(
+                        selectedAction === "withdraw" ? null : "withdraw"
+                      )
+                    }
+                  >
+                    {loading && <LoadingAnimation />}
+                    Withdraw
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant={
+                      selectedAction === "redeem" ? "default" : "outline"
+                    }
+                    className="w-full"
+                    disabled={loading}
+                    onClick={() =>
+                      setSelectedAction(
+                        selectedAction === "redeem" ? null : "redeem"
+                      )
+                    }
+                  >
+                    {loading && <LoadingAnimation />}
+                    Redeem
+                  </Button>
+                </div>
 
-              {renderActionContent()}
-              <p className="text-sm text-gray-400">
-                {selectedAction === "deposit" &&
-                  "Deposit: mints vault shares to receiver by depositing exactly assets of underlying tokens."}
-                {selectedAction === "mint" &&
-                  "Mint: mints exactly vault shares to receiver by depositing assets of underlying tokens."}
-                {selectedAction === "withdraw" &&
-                  "Withdraw: burns shares from owner and sends exactly assets of underlying tokens to receiver."}
-                {selectedAction === "redeem" &&
-                  "Redeeem: burns exactly shares from owner and sends assets of underlying tokens to receiver."}
-              </p>
-            </CardContent>
-            {error && <CardFooter className="text-red-700">{error}</CardFooter>}
-          </Card>
+                {renderActionContent()}
+                <p className="text-sm text-gray-400">
+                  {selectedAction === "deposit" &&
+                    "Deposit: mints vault shares to receiver by depositing exactly assets of underlying tokens."}
+                  {selectedAction === "mint" &&
+                    "Mint: mints exactly vault shares to receiver by depositing assets of underlying tokens."}
+                  {selectedAction === "withdraw" &&
+                    "Withdraw: burns shares from owner and sends exactly assets of underlying tokens to receiver."}
+                  {selectedAction === "redeem" &&
+                    "Redeeem: burns exactly shares from owner and sends assets of underlying tokens to receiver."}
+                </p>
+              </CardContent>
+              {error && (
+                <CardFooter className="text-red-700">{error}</CardFooter>
+              )}
+            </Card>
+          </>
         ) : (
           <p className="bold">
             Please connect your Freighter wallet to view all details.

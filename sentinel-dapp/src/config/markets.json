@@ -1,6 +1,7 @@
 {
     "sorobanRpcUrl": "https://soroban-testnet.stellar.org:443",
     "horizonRpcUrl": "https://horizon-testnet.stellar.org",
+    "accountExplorer": "https://stellar.expert/explorer/testnet/account/",
     "defaultTimeoutSeconds": 30,
     "defaultTransactionPollSeconds": 1000,
     "isTestnet": true,

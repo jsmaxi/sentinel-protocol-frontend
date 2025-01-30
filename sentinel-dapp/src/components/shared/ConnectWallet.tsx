@@ -2,8 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import config from "../../config/markets.json";
 
-const explorer = "https://stellar.expert/explorer/testnet/account/";
+const explorer = config.accountExplorer;
 
 interface WalletProps {
   publicKey: string | null;
