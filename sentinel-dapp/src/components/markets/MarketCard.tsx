@@ -51,7 +51,10 @@ export function MarketCard({ market }: MarketCardProps) {
         MarketType[market.type]
       }`}
     >
-      <Card className="hover:scale-[1.02] transition-transform duration-200 glass">
+      <Card
+        className={`hover:scale-[1.02] transition-transform duration-200 
+          ${market.type === MarketType.HEDGE ? "glass" : "risk-glass"}`}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-xl font-semibold">{market.name}</CardTitle>
           <Badge

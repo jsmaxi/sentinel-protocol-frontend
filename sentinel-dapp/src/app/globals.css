@@ -88,6 +88,10 @@
     @apply bg-black/10 backdrop-blur-lg border border-white/10;
   }
   
+  .risk-glass {
+    @apply bg-orange-100/5 backdrop-blur-lg border border-white/10;
+  }
+  
   .hero-gradient {
     @apply bg-gradient-to-br from-[#1A1F2C] via-background to-[#222222];
   }

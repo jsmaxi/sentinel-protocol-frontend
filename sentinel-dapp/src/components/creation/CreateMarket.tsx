@@ -93,14 +93,25 @@ const CreateMarket = () => {
     }
   };
 
-  const onSubmit = (data: CreateMarketFormData) => {
-    const emptyFields = Object.entries(data).filter(([key, value]) => !value);
+  const onSubmit = async (data: CreateMarketFormData) => {
+    const emptyFields = Object.entries(data).filter(
+      ([key, value]) => typeof value !== "number" && !value
+    );
 
     if (emptyFields.length > 0) {
       toast({
         variant: "destructive",
         title: "Validation Error",
         description: "All fields are required. Please fill in all the fields.",
+      });
+      return;
+    }
+
+    if (data.eventDate < new Date()) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Event date must not be in the past.",
       });
       return;
     }
@@ -163,6 +174,7 @@ const CreateMarket = () => {
                 <FormField
                   control={form.control}
                   name="name"
+                  defaultValue={""}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Market Name</FormLabel>
@@ -178,6 +190,7 @@ const CreateMarket = () => {
                 <FormField
                   control={form.control}
                   name="description"
+                  defaultValue={""}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Description</FormLabel>
@@ -198,6 +211,7 @@ const CreateMarket = () => {
                   <FormField
                     control={form.control}
                     name="eventDate"
+                    defaultValue={new Date()}
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>Event Date</FormLabel>
@@ -236,6 +250,7 @@ const CreateMarket = () => {
                   <FormField
                     control={form.control}
                     name="eventTime"
+                    defaultValue={""}
                     render={({ field: { onChange, value, ...field } }) => (
                       <FormItem className="space-y-0">
                         <FormLabel>Event Time (UTC)</FormLabel>
@@ -257,6 +272,7 @@ const CreateMarket = () => {
                 <FormField
                   control={form.control}
                   name="asset"
+                  defaultValue={""}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Underlying Asset</FormLabel>
@@ -283,6 +299,7 @@ const CreateMarket = () => {
                 <FormField
                   control={form.control}
                   name="oracleName"
+                  defaultValue={""}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Oracle Name</FormLabel>
@@ -298,6 +315,7 @@ const CreateMarket = () => {
                 <FormField
                   control={form.control}
                   name="oracleAddress"
+                  defaultValue={""}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Oracle Address</FormLabel>
@@ -313,6 +331,7 @@ const CreateMarket = () => {
                 <FormField
                   control={form.control}
                   name="commissionFee"
+                  defaultValue={0}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Commission Fee (%)</FormLabel>
@@ -334,6 +353,7 @@ const CreateMarket = () => {
                 <FormField
                   control={form.control}
                   name="riskScore"
+                  defaultValue={"LOW"}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Risk Score</FormLabel>
@@ -362,6 +382,7 @@ const CreateMarket = () => {
                 <FormField
                   control={form.control}
                   name="exercising"
+                  defaultValue={"AUTO"}
                   render={({ field }) => (
                     <FormItem className="space-y-3">
                       <FormLabel>Exercising</FormLabel>
@@ -390,6 +411,7 @@ const CreateMarket = () => {
                 <FormField
                   control={form.control}
                   name="lockPeriod"
+                  defaultValue={0}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Lock Period (seconds)</FormLabel>
@@ -410,6 +432,7 @@ const CreateMarket = () => {
                 <FormField
                   control={form.control}
                   name="eventThreshold"
+                  defaultValue={0}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Event Threshold (seconds)</FormLabel>
@@ -430,6 +453,7 @@ const CreateMarket = () => {
                 <FormField
                   control={form.control}
                   name="unlockPeriod"
+                  defaultValue={0}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Unlock Period (seconds)</FormLabel>
