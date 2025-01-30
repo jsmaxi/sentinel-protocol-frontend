@@ -149,6 +149,13 @@ function handleSimulationResponse(
   }
 }
 
+export async function getLatestLedgerSequence(): Promise<number> {
+  const server = new Server(config.sorobanRpcUrl);
+  const ledger = await server.getLatestLedger();
+  if (!ledger) throw "Empty ledger response";
+  return ledger.sequence;
+}
+
 export async function fetchBalances(
   publicKey: string
 ): Promise<AssetBalanceType[]> {

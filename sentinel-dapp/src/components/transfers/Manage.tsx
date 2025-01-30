@@ -16,11 +16,6 @@ import {
 import { FieldValues, useForm } from "react-hook-form";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
-import {
-  ParsedSorobanError,
-  SorobanErrorParser,
-} from "../../utils/SorobanErrorParser";
-import Processing from "../shared/Processing";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
 import ContactEmail from "../shared/ContactEmail";
@@ -30,12 +25,17 @@ import {
   transferAssets,
   transferShares,
 } from "@/utils/VaultContractCaller";
+import LoadingAnimation from "../shared/LoadingAnimation";
+import { useToast } from "@/hooks/use-toast";
+import { getLatestLedgerSequence } from "@/actions/serverActions";
 
 const Manage = () => {
+  const { toast } = useToast();
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<ParsedSorobanError | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [latestLedger, setLatestLedger] = useState<number | null>(null);
 
   const approveSharesForm = useForm();
   const transferSharesForm = useForm();
@@ -85,6 +85,21 @@ const Manage = () => {
   };
 
   useEffect(() => {
+    const fetchLedger = async () => {
+      try {
+        if (publicKey) {
+          const ledger = await getLatestLedgerSequence();
+          setLatestLedger(ledger);
+          console.log(ledger);
+        }
+      } catch (e) {
+        console.log("LEDGER", e);
+      }
+    };
+    fetchLedger();
+  }, [publicKey]);
+
+  useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 400);
     };
@@ -99,22 +114,31 @@ const Manage = () => {
 
   const transferSharesTo = async () => {
     try {
-      setLoading(true);
       setError(null);
+      setLoading(true);
       if (!publicKey) {
         console.log("Account not connected");
+        setError("Account not connected");
         return;
       }
-      const _ = await transferShares(
+      const success = await transferShares(
         transferSharesForm.getValues("vaultAddress"),
         publicKey,
         publicKey,
         transferSharesForm.getValues("receiverAddress"),
-        transferSharesForm.getValues("transferAmount")
+        BigInt(transferSharesForm.getValues("transferAmount"))
       );
+      if (success) {
+        toast({
+          title: "Transfer Shares",
+          description: "Transfer shares executed successfully.",
+        });
+      }
     } catch (error) {
       console.log("Error", error);
-      // set error
+      setError(
+        "Something went wrong. Please try again or contact the support."
+      );
     } finally {
       setLoading(false);
     }
@@ -122,22 +146,31 @@ const Manage = () => {
 
   const transferAssetsTo = async () => {
     try {
-      setLoading(true);
       setError(null);
+      setLoading(true);
       if (!publicKey) {
         console.log("Account not connected");
+        setError("Account not connected");
         return;
       }
-      const _ = await transferAssets(
+      const success = await transferAssets(
         transferAssetsForm.getValues("assetAddress"),
         publicKey,
         publicKey,
         transferAssetsForm.getValues("receiverAddress"),
-        transferAssetsForm.getValues("transferAmount")
+        BigInt(transferAssetsForm.getValues("transferAmount"))
       );
+      if (success) {
+        toast({
+          title: "Transfer Assets",
+          description: "Transfer assets executed successfully.",
+        });
+      }
     } catch (error) {
       console.log("Error", error);
-      // set error
+      setError(
+        "Something went wrong. Please try again or contact the support."
+      );
     } finally {
       setLoading(false);
     }
@@ -145,23 +178,32 @@ const Manage = () => {
 
   const approveSharesTo = async (fields: FieldValues) => {
     try {
-      setLoading(true);
       setError(null);
+      setLoading(true);
       if (!publicKey) {
         console.log("Account not connected");
+        setError("Account not connected");
         return;
       }
-      const _ = await approveShares(
+      const success = await approveShares(
         fields["vaultAddress"],
         publicKey,
         publicKey,
         fields["spenderAddress"],
-        fields["approveAmount"],
-        fields["expiresInDays"]
+        BigInt(fields["approveAmount"]),
+        Number(fields["expiresInDays"])
       );
+      if (success) {
+        toast({
+          title: "Approve Shares",
+          description: "Approve shares executed successfully.",
+        });
+      }
     } catch (error) {
       console.log("Error", error);
-      // set error
+      setError(
+        "Something went wrong. Please try again or contact the support."
+      );
     } finally {
       setLoading(false);
     }
@@ -169,23 +211,32 @@ const Manage = () => {
 
   const approveAssetsTo = async () => {
     try {
-      setLoading(true);
       setError(null);
+      setLoading(true);
       if (!publicKey) {
         console.log("Account not connected");
+        setError("Account not connected");
         return;
       }
-      const _ = await approveAssets(
-        transferAssetsForm.getValues("assetAddress"),
+      const success = await approveAssets(
+        approveAssetsForm.getValues("assetAddress"),
         publicKey,
         publicKey,
-        transferAssetsForm.getValues("spenderAddress"),
-        transferAssetsForm.getValues("approveAmount"),
-        transferAssetsForm.getValues("expirationLedger")
+        approveAssetsForm.getValues("spenderAddress"),
+        BigInt(approveAssetsForm.getValues("approveAmount")),
+        Number(approveAssetsForm.getValues("expirationLedger"))
       );
+      if (success) {
+        toast({
+          title: "Approve Assets",
+          description: "Approve assets executed successfully.",
+        });
+      }
     } catch (error) {
       console.log("Error", error);
-      // set error
+      setError(
+        "Something went wrong. Please try again or contact the support."
+      );
     } finally {
       setLoading(false);
     }
@@ -233,309 +284,314 @@ const Manage = () => {
         </motion.div>
 
         {publicKey ? (
-          loading ? (
-            <Processing />
-          ) : (
-            <Tabs defaultValue="approve-shares" className="w-full">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TabsList className="w-full">
-                  <TabsTrigger value="approve-shares" className="flex-1">
-                    Approve Shares
-                  </TabsTrigger>
-                  <TabsTrigger value="transfer-shares" className="flex-1">
-                    Transfer Shares
-                  </TabsTrigger>
-                </TabsList>
-                <TabsList className="w-full">
-                  <TabsTrigger value="approve-assets" className="flex-1">
-                    Approve Assets
-                  </TabsTrigger>
-                  <TabsTrigger value="transfer-assets" className="flex-1">
-                    Transfer Assets
-                  </TabsTrigger>
-                </TabsList>
-              </div>
+          <Tabs defaultValue="approve-shares" className="w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <TabsList className="w-full">
+                <TabsTrigger value="approve-shares" className="flex-1">
+                  Approve Shares
+                </TabsTrigger>
+                <TabsTrigger value="transfer-shares" className="flex-1">
+                  Transfer Shares
+                </TabsTrigger>
+              </TabsList>
+              <TabsList className="w-full">
+                <TabsTrigger value="approve-assets" className="flex-1">
+                  Approve Assets
+                </TabsTrigger>
+                <TabsTrigger value="transfer-assets" className="flex-1">
+                  Transfer Assets
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-              <TabsContent value="approve-shares" className="mt-6">
-                <Form {...approveSharesForm}>
-                  <h2 className="text-xl text-center">Approve Shares</h2>
-                  <form
-                    onSubmit={approveSharesForm.handleSubmit((e) =>
-                      approveSharesTo(e)
+            <TabsContent value="approve-shares" className="mt-6">
+              <Form {...approveSharesForm}>
+                <h2 className="text-xl text-center">Approve Shares</h2>
+                <form
+                  onSubmit={approveSharesForm.handleSubmit((e) =>
+                    approveSharesTo(e)
+                  )}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={approveSharesForm.control}
+                    defaultValue={""}
+                    name="vaultAddress"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Vault Address</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter vault address" {...field} />
+                        </FormControl>
+                      </FormItem>
                     )}
-                    className="space-y-4"
-                  >
-                    <FormField
-                      control={approveSharesForm.control}
-                      name="vaultAddress"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Vault Address</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter vault address"
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={approveSharesForm.control}
-                      name="spenderAddress"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Spender Address</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter spender address"
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={approveSharesForm.control}
-                      name="approveAmount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Approve Amount</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="Enter amount"
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={approveSharesForm.control}
-                      name="expiresInDays"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Expires In Days</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="Enter days"
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <Button type="submit" className="w-full">
-                      Submit
-                    </Button>
-                  </form>
-                </Form>
-              </TabsContent>
+                  />
+                  <FormField
+                    control={approveSharesForm.control}
+                    name="spenderAddress"
+                    defaultValue={""}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Spender Address</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter spender address"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={approveSharesForm.control}
+                    name="approveAmount"
+                    defaultValue={""}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Approve Amount</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Enter amount"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={approveSharesForm.control}
+                    name="expiresInDays"
+                    defaultValue={""}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Expires In Days</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Enter days"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading && <LoadingAnimation />} Submit
+                  </Button>
+                </form>
+              </Form>
+            </TabsContent>
 
-              <TabsContent value="transfer-shares" className="mt-6">
-                <Form {...transferSharesForm}>
-                  <h2 className="text-xl text-center">Transfer Shares</h2>
-                  <form
-                    onSubmit={transferSharesForm.handleSubmit(transferSharesTo)}
-                    className="space-y-4"
-                  >
-                    <FormField
-                      control={transferSharesForm.control}
-                      name="vaultAddress"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Vault Address</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter vault address"
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={transferSharesForm.control}
-                      name="receiverAddress"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Receiver Address</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter receiver address"
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={transferSharesForm.control}
-                      name="transferAmount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Transfer Amount</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="Enter amount"
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <Button type="submit" className="w-full">
-                      Submit
-                    </Button>
-                  </form>
-                </Form>
-              </TabsContent>
+            <TabsContent value="transfer-shares" className="mt-6">
+              <Form {...transferSharesForm}>
+                <h2 className="text-xl text-center">Transfer Shares</h2>
+                <form
+                  onSubmit={transferSharesForm.handleSubmit(transferSharesTo)}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={transferSharesForm.control}
+                    name="vaultAddress"
+                    defaultValue={""}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Vault Address</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter vault address" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={transferSharesForm.control}
+                    name="receiverAddress"
+                    defaultValue={""}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Receiver Address</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter receiver address"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={transferSharesForm.control}
+                    name="transferAmount"
+                    defaultValue={""}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Transfer Amount</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Enter amount"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading && <LoadingAnimation />} Submit
+                  </Button>
+                </form>
+              </Form>
+            </TabsContent>
 
-              <TabsContent value="approve-assets" className="mt-6">
-                <Form {...approveAssetsForm}>
-                  <h2 className="text-xl text-center">Approve Assets</h2>
-                  <form
-                    onSubmit={approveAssetsForm.handleSubmit(approveAssetsTo)}
-                    className="space-y-4"
-                  >
-                    <FormField
-                      control={approveAssetsForm.control}
-                      name="assetAddress"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Asset Address</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter asset address"
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={approveAssetsForm.control}
-                      name="spenderAddress"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Spender Address</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter spender address"
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={approveAssetsForm.control}
-                      name="approveAmount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Approve Amount</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="Enter amount"
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={approveAssetsForm.control}
-                      name="expirationLedger"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Expiration Ledger</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="Enter ledger number"
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <Button type="submit" className="w-full">
-                      Submit
-                    </Button>
-                  </form>
-                </Form>
-              </TabsContent>
+            <TabsContent value="approve-assets" className="mt-6">
+              <Form {...approveAssetsForm}>
+                <h2 className="text-xl text-center">Approve Assets</h2>
+                <form
+                  onSubmit={approveAssetsForm.handleSubmit(approveAssetsTo)}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={approveAssetsForm.control}
+                    name="assetAddress"
+                    defaultValue={""}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Asset Address</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter asset address" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={approveAssetsForm.control}
+                    name="spenderAddress"
+                    defaultValue={""}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Spender Address</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter spender address"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={approveAssetsForm.control}
+                    name="approveAmount"
+                    defaultValue={""}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Approve Amount</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Enter amount"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={approveAssetsForm.control}
+                    name="expirationLedger"
+                    defaultValue={""}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Expiration Ledger</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Enter ledger number"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  {latestLedger && (
+                    <p className="text-gray-400 text-sm">
+                      Latest ledger: <strong>{latestLedger}</strong>
+                    </p>
+                  )}
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading && <LoadingAnimation />} Submit
+                  </Button>
+                </form>
+              </Form>
+            </TabsContent>
 
-              <TabsContent value="transfer-assets" className="mt-6">
-                <Form {...transferAssetsForm}>
-                  <h2 className="text-xl text-center">Transfer Assets</h2>
-                  <form
-                    onSubmit={transferAssetsForm.handleSubmit(transferAssetsTo)}
-                    className="space-y-4"
-                  >
-                    <FormField
-                      control={transferAssetsForm.control}
-                      name="assetAddress"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Asset Address</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter asset address"
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={transferAssetsForm.control}
-                      name="receiverAddress"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Receiver Address</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter receiver address"
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={transferAssetsForm.control}
-                      name="transferAmount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Transfer Amount</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="Enter amount"
-                              {...field}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <Button type="submit" className="w-full">
-                      Submit
-                    </Button>
-                  </form>
-                </Form>
-              </TabsContent>
-            </Tabs>
-          )
+            <TabsContent value="transfer-assets" className="mt-6">
+              <Form {...transferAssetsForm}>
+                <h2 className="text-xl text-center">Transfer Assets</h2>
+                <form
+                  onSubmit={transferAssetsForm.handleSubmit(transferAssetsTo)}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={transferAssetsForm.control}
+                    name="assetAddress"
+                    defaultValue={""}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Asset Address</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter asset address" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={transferAssetsForm.control}
+                    name="receiverAddress"
+                    defaultValue={""}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Receiver Address</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter receiver address"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={transferAssetsForm.control}
+                    name="transferAmount"
+                    defaultValue={""}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Transfer Amount</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Enter amount"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading && <LoadingAnimation />} Submit
+                  </Button>
+                </form>
+              </Form>
+            </TabsContent>
+          </Tabs>
         ) : (
           <p className="bold">
             Please connect your Freighter wallet to view all details.
           </p>
         )}
+
+        {error && <p className="text-red-700">{error}</p>}
 
         {/* Disclaimer */}
         <div className="mt-12 text-left text-sm text-muted-foreground">

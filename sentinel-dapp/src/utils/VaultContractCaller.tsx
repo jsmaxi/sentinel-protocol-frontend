@@ -134,6 +134,7 @@ export async function approveAssets(
   approveAmount: bigint,
   expirationLedger: number
 ): Promise<boolean> {
+  // decimals needed ?
   const prep = await prepareApproveAssets(
     assetAddress,
     "approve",
@@ -154,14 +155,17 @@ export async function transferAssets(
   receiver: string,
   amount: bigint
 ): Promise<boolean> {
-  // decimals ** ?
+  const dcm = await simulateGetAction(assetAddress, "decimals", caller);
+  if (typeof dcm !== "number" || dcm < 0)
+    throw "Unable to retrieve asset decimals";
+  const pow = BigInt(Math.pow(10, dcm));
   const prep = await prepareTransferAssets(
     assetAddress,
     "transfer",
     caller,
     owner,
     receiver,
-    amount
+    amount * pow
   );
   const sgn = await signTx(prep);
   return await sendTx(sgn);
