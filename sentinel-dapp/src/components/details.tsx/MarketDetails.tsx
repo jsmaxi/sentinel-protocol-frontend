@@ -1,7 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Shield, Calendar, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -9,22 +15,11 @@ import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
-import {
-  ParsedSorobanError,
-  SorobanErrorParser,
-} from "../../utils/SorobanErrorParser";
 import Processing from "../shared/Processing";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
 import ContactEmail from "../shared/ContactEmail";
-import {
-  deposit,
-  mint,
-  redeem,
-  totalShares,
-  totalSharesOf,
-  withdraw,
-} from "@/utils/VaultContractCaller";
+import { deposit, mint, redeem, withdraw } from "@/utils/VaultContractCaller";
 import { useSearchParams } from "next/navigation";
 import { fetchBalance } from "@/actions/serverActions";
 import {
@@ -35,6 +30,8 @@ import {
 } from "@/types/market";
 import { DateTimeConverter } from "@/utils/DateTimeConverter";
 import { marketDetails } from "@/utils/MarketContractCaller";
+import LoadingAnimation from "../shared/LoadingAnimation";
+import { useToast } from "@/hooks/use-toast";
 
 // const mockMarket: Market = {
 //   id: "1",
@@ -66,12 +63,13 @@ export default function MarketDetails() {
   const CONTRACT_ID = searchParams.get("market") ?? "";
   const SIDE = searchParams.get("side") ?? "";
 
+  const { toast } = useToast();
   const [selectedAction, setSelectedAction] = useState<ActionType>(null);
   const [amount, setAmount] = useState<string>("");
   const [ownerAddress, setOwnerAddress] = useState<string>("");
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<ParsedSorobanError | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null | undefined>(null);
   const [market, setMarket] = useState<Market | null>(null);
   const [refetchMarket, setRefetchMarket] = useState<boolean>(false);
@@ -119,11 +117,14 @@ export default function MarketDetails() {
   };
 
   useEffect(() => {
+    if (publicKey) setOwnerAddress(publicKey);
+  }, [publicKey]);
+
+  useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
       try {
         if (isMounted) {
-          // setLoading(true);
           setError(null);
 
           console.time("Fetch Market Details Timer");
@@ -190,9 +191,10 @@ export default function MarketDetails() {
         }
       } catch (error) {
         console.error(error);
-        // display the error
+        setError(
+          "Something went wrong. Please try again or contact the support."
+        );
       } finally {
-        // setLoading(false);
         console.timeEnd("Fetch Market Details Timer");
       }
     };
@@ -203,27 +205,45 @@ export default function MarketDetails() {
   }, [publicKey, refetchMarket]);
 
   const calculateReturn = () => {
+    // Approximate for display purposes
+    // Formula: (input * (totalA + 1)) / (totalB + 1)
     if (!market) return "";
     const inputAmount = parseFloat(amount) || 0;
-    return (inputAmount * (1 + market.possibleReturn / 100)).toFixed(2);
+    if (selectedAction === "deposit" || selectedAction === "withdraw")
+      return (
+        (inputAmount * (Number(market.totalShares) + 1)) /
+          (Number(market.totalAssets) + 1) +
+        " Shares"
+      );
+    if (selectedAction === "mint" || selectedAction === "redeem")
+      return (
+        (inputAmount * (Number(market.totalAssets) + 1)) /
+          (Number(market.totalShares) + 1) +
+        " Assets"
+      );
+    return "";
   };
 
   const handlePercentageClick = (percentage: number) => {
-    const value =
-      balance === null || balance === undefined
-        ? ""
-        : ((balance * percentage) / 100).toString();
-    setAmount(value);
+    if (selectedAction === "deposit") {
+      const value =
+        balance === null || balance === undefined
+          ? ""
+          : ((balance * percentage) / 100).toString();
+      setAmount(value);
+    } else "";
   };
 
   const handleConfirm = async () => {
     if (!publicKey) {
       console.error("Wallet not connected");
+      setError("Wallet not connected");
       return;
     }
 
     if (!CONTRACT_ID) {
       console.error("Contract ID missing");
+      setError("Contract ID not found");
       return;
     }
 
@@ -231,11 +251,13 @@ export default function MarketDetails() {
 
     if (!operationName) {
       console.error("Operation name missing");
+      setError("Invalid operation");
       return;
     }
 
     if (!market?.vaultAddress) {
       console.error("Vault address missing");
+      setError("Vault address not found");
       return;
     }
 
@@ -248,51 +270,86 @@ export default function MarketDetails() {
       ownerAddress
     );
 
-    switch (selectedAction) {
-      case "deposit":
-        const deposited = await deposit(
-          market.vaultAddress,
-          publicKey,
-          publicKey,
-          BigInt(amount)
-        );
-        break;
-      case "mint":
-        const minted = await mint(
-          market.vaultAddress,
-          publicKey,
-          publicKey,
-          BigInt(amount)
-        );
-        break;
-      case "withdraw":
-        const withdrawn = await withdraw(
-          market.vaultAddress,
-          publicKey,
-          publicKey,
-          publicKey,
-          BigInt(amount)
-        );
-        break;
-      case "redeem":
-        const redeemed = await redeem(
-          market.vaultAddress,
-          publicKey,
-          publicKey,
-          publicKey,
-          BigInt(amount)
-        );
-        break;
-      default:
-        console.log("Invalid action selected");
-        return;
-    }
+    try {
+      setError("");
+      setLoading(true);
 
-    // Reset fields
-    setSelectedAction(null);
-    setAmount("");
-    setOwnerAddress("");
-    setRefetchMarket(!refetchMarket);
+      switch (selectedAction) {
+        case "deposit":
+          const deposited = await deposit(
+            market.vaultAddress,
+            publicKey,
+            publicKey,
+            BigInt(amount)
+          );
+          if (deposited) {
+            toast({
+              title: "Deposit",
+              description: "Deposit executed successfully.",
+            });
+          }
+          break;
+        case "mint":
+          const minted = await mint(
+            market.vaultAddress,
+            publicKey,
+            publicKey,
+            BigInt(amount)
+          );
+          if (minted) {
+            toast({
+              title: "Mint",
+              description: "Mint executed successfully.",
+            });
+          }
+          break;
+        case "withdraw":
+          const withdrawn = await withdraw(
+            market.vaultAddress,
+            publicKey,
+            publicKey,
+            publicKey,
+            BigInt(amount)
+          );
+          if (withdrawn) {
+            toast({
+              title: "Withdraw",
+              description: "Withdraw executed successfully.",
+            });
+          }
+          break;
+        case "redeem":
+          const redeemed = await redeem(
+            market.vaultAddress,
+            publicKey,
+            publicKey,
+            publicKey,
+            BigInt(amount)
+          );
+          if (redeemed) {
+            toast({
+              title: "Redeem",
+              description: "Redeem executed successfully.",
+            });
+          }
+          break;
+        default:
+          console.log("Invalid action selected");
+          return;
+      }
+
+      // Reset fields
+      setSelectedAction(null);
+      setAmount("");
+      setRefetchMarket(!refetchMarket);
+    } catch (e) {
+      console.error(e);
+      setError(
+        "Something went wrong. Please try again or contact the support."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderActionContent = () => {
@@ -339,6 +396,7 @@ export default function MarketDetails() {
                 <Button
                   variant="outline"
                   size="sm"
+                  disabled={selectedAction !== "deposit"}
                   onClick={() => handlePercentageClick(25)}
                 >
                   25%
@@ -346,6 +404,7 @@ export default function MarketDetails() {
                 <Button
                   variant="outline"
                   size="sm"
+                  disabled={selectedAction !== "deposit"}
                   onClick={() => handlePercentageClick(50)}
                 >
                   50%
@@ -353,6 +412,7 @@ export default function MarketDetails() {
                 <Button
                   variant="outline"
                   size="sm"
+                  disabled={selectedAction !== "deposit"}
                   onClick={() => handlePercentageClick(75)}
                 >
                   75%
@@ -360,6 +420,7 @@ export default function MarketDetails() {
                 <Button
                   variant="outline"
                   size="sm"
+                  disabled={selectedAction !== "deposit"}
                   onClick={() => handlePercentageClick(100)}
                 >
                   MAX
@@ -370,12 +431,17 @@ export default function MarketDetails() {
           {amount && (
             <>
               <div className="text-sm">
-                <span className="text-muted-foreground">Estimated return:</span>
-                <span className="ml-2">
-                  {calculateReturn()} {market?.assetSymbol}
+                <span className="text-muted-foreground">
+                  Preview estimated return:
                 </span>
+                <span className="ml-2">{calculateReturn()}</span>
               </div>
-              <Button onClick={handleConfirm} className="w-full">
+              <Button
+                onClick={handleConfirm}
+                disabled={loading}
+                className="w-full"
+              >
+                {loading && <LoadingAnimation />}
                 Confirm {actionTitle}
               </Button>
             </>
@@ -407,156 +473,165 @@ export default function MarketDetails() {
         </div>
 
         {publicKey ? (
-          loading ? (
-            <Processing />
-          ) : (
-            <Card className="glass">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-2xl">
-                      {market ? market.name : "Loading..."}
-                    </CardTitle>
-                    <p className="text-muted-foreground mt-2">
-                      {market?.description}
-                    </p>
-                  </div>
-                  <Badge className="bg-green-500/20 text-green-500">
-                    {market && MarketStatus[market.status]}
-                  </Badge>
+          <Card className="glass">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-2xl">
+                    {market ? market.name : "Loading..."}
+                  </CardTitle>
+                  <p className="text-muted-foreground mt-2">
+                    {market?.description}
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <span className="text-sm text-muted-foreground">
-                      Selected Side
+                <Badge className="bg-green-500/20 text-green-500">
+                  {market && MarketStatus[market.status]}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <span className="text-sm text-muted-foreground">
+                    Selected Side
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    <span className="text-lg font-semibold">
+                      {market && MarketType[market.type]}
                     </span>
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-5 w-5" />
-                      <span className="text-lg font-semibold">
-                        {market && MarketType[market.type]}
-                      </span>
-                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <span className="text-sm text-muted-foreground">
-                      Wallet Balance
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <Wallet className="h-5 w-5" />
-                      <span className="text-lg font-semibold">
-                        {balance === null
-                          ? "Loading..."
-                          : balance === undefined
-                          ? "Unknown"
-                          : balance +
-                            " " +
-                            (market?.assetSymbol === "native"
-                              ? "XLM"
-                              : market?.assetSymbol)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <span className="text-sm text-muted-foreground">
-                      Vault Shares
-                    </span>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-muted-foreground">Total:</span>
-                        <span>
-                          {market?.totalShares}{" "}
-                          {market?.assetSymbol === "native"
+                </div>
+                <div className="space-y-2">
+                  <span className="text-sm text-muted-foreground">
+                    Wallet Balance
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Wallet className="h-5 w-5" />
+                    <span className="text-lg font-semibold">
+                      {balance === null
+                        ? "Loading..."
+                        : balance === undefined
+                        ? "Unknown"
+                        : balance +
+                          " " +
+                          (market?.assetSymbol === "native"
                             ? "XLM"
-                            : market?.assetSymbol}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-muted-foreground">Your:</span>
-                        <span>
-                          {market?.yourShares}{" "}
-                          {market?.assetSymbol === "native"
-                            ? "XLM"
-                            : market?.assetSymbol}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <span className="text-sm text-muted-foreground">
-                      Event Time
+                            : market?.assetSymbol)}
                     </span>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
-                      <span className="text-lg font-semibold">
-                        {market && format(market.eventTime, "PPp")}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <span className="text-sm text-muted-foreground">
+                    Vault Shares
+                  </span>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">Total:</span>
+                      <span>
+                        {market?.totalShares}{" "}
+                        {market?.assetSymbol === "native"
+                          ? "XLM"
+                          : market?.assetSymbol}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">Your:</span>
+                      <span>
+                        {market?.yourShares}{" "}
+                        {market?.assetSymbol === "native"
+                          ? "XLM"
+                          : market?.assetSymbol}
                       </span>
                     </div>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Button
-                    size="lg"
-                    className="w-full"
-                    variant={
-                      selectedAction === "deposit" ? "default" : "outline"
-                    }
-                    onClick={() =>
-                      setSelectedAction(
-                        selectedAction === "deposit" ? null : "deposit"
-                      )
-                    }
-                  >
-                    Deposit
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant={selectedAction === "mint" ? "default" : "outline"}
-                    className="w-full"
-                    onClick={() =>
-                      setSelectedAction(
-                        selectedAction === "mint" ? null : "mint"
-                      )
-                    }
-                  >
-                    Mint
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant={
-                      selectedAction === "withdraw" ? "default" : "outline"
-                    }
-                    className="w-full"
-                    onClick={() =>
-                      setSelectedAction(
-                        selectedAction === "withdraw" ? null : "withdraw"
-                      )
-                    }
-                  >
-                    Withdraw
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant={
-                      selectedAction === "redeem" ? "default" : "outline"
-                    }
-                    className="w-full"
-                    onClick={() =>
-                      setSelectedAction(
-                        selectedAction === "redeem" ? null : "redeem"
-                      )
-                    }
-                  >
-                    Redeem
-                  </Button>
+                <div className="space-y-2">
+                  <span className="text-sm text-muted-foreground">
+                    Event Time
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    <span className="text-lg font-semibold">
+                      {market && format(market.eventTime, "PPp")}
+                    </span>
+                  </div>
                 </div>
+              </div>
 
-                {renderActionContent()}
-              </CardContent>
-            </Card>
-          )
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Button
+                  size="lg"
+                  className="w-full"
+                  variant={selectedAction === "deposit" ? "default" : "outline"}
+                  disabled={loading}
+                  onClick={() =>
+                    setSelectedAction(
+                      selectedAction === "deposit" ? null : "deposit"
+                    )
+                  }
+                >
+                  {loading && <LoadingAnimation />}
+                  Deposit
+                </Button>
+                <Button
+                  size="lg"
+                  variant={selectedAction === "mint" ? "default" : "outline"}
+                  className="w-full"
+                  disabled={loading}
+                  onClick={() =>
+                    setSelectedAction(selectedAction === "mint" ? null : "mint")
+                  }
+                >
+                  {loading && <LoadingAnimation />}
+                  Mint
+                </Button>
+                <Button
+                  size="lg"
+                  variant={
+                    selectedAction === "withdraw" ? "default" : "outline"
+                  }
+                  className="w-full"
+                  disabled={loading}
+                  onClick={() =>
+                    setSelectedAction(
+                      selectedAction === "withdraw" ? null : "withdraw"
+                    )
+                  }
+                >
+                  {loading && <LoadingAnimation />}
+                  Withdraw
+                </Button>
+                <Button
+                  size="lg"
+                  variant={selectedAction === "redeem" ? "default" : "outline"}
+                  className="w-full"
+                  disabled={loading}
+                  onClick={() =>
+                    setSelectedAction(
+                      selectedAction === "redeem" ? null : "redeem"
+                    )
+                  }
+                >
+                  {loading && <LoadingAnimation />}
+                  Redeem
+                </Button>
+              </div>
+
+              {renderActionContent()}
+              <p className="text-sm text-gray-400">
+                {selectedAction === "deposit" &&
+                  "Deposit: mints vault shares to receiver by depositing exactly assets of underlying tokens."}
+                {selectedAction === "mint" &&
+                  "Mint: mints exactly vault shares to receiver by depositing assets of underlying tokens."}
+                {selectedAction === "withdraw" &&
+                  "Withdraw: burns shares from owner and sends exactly assets of underlying tokens to receiver."}
+                {selectedAction === "redeem" &&
+                  "Redeeem: burns exactly shares from owner and sends assets of underlying tokens to receiver."}
+              </p>
+            </CardContent>
+            {error && <CardFooter className="text-red-700">{error}</CardFooter>}
+          </Card>
         ) : (
           <p className="bold">
             Please connect your Freighter wallet to view all details.
