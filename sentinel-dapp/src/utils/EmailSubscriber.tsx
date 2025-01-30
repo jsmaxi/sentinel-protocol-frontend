@@ -3,14 +3,15 @@
 import { neon } from "@neondatabase/serverless";
 
 const createTableSQL = `
-  CREATE TABLE IF NOT EXISTS "sentinel.emails" (
+  CREATE TABLE IF NOT EXISTS "sentinel.emailist" (
     "id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    "email" TEXT NOT NULL UNIQUE
+    "email" TEXT NOT NULL UNIQUE,
+    "datetime" timestamp
   );
 `;
 
 const insertIntoTableSQL = `
-  INSERT INTO "sentinel.emails" (email) VALUES ($1);
+  INSERT INTO "sentinel.emailist" (email,datetime) VALUES ($1,$2);
 `;
 
 export const subscribeEmailUsingNeonDB = async (
@@ -20,7 +21,7 @@ export const subscribeEmailUsingNeonDB = async (
     console.log(process.env.DATABASE_URL);
     const sql = neon(`${process.env.DATABASE_URL}`);
     const __ = await sql(createTableSQL);
-    const _ = await sql(insertIntoTableSQL, [email]);
+    const _ = await sql(insertIntoTableSQL, [email, new Date().toISOString()]);
     return true;
   } catch (e) {
     console.log(e);
