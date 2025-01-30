@@ -13,9 +13,12 @@ import { Button } from "@/components/ui/button";
 import {
   AssetBalanceType,
   Market,
+  MarketDetailsType,
   MarketRiskScore,
   MarketStatus,
+  MarketStatusString,
   MarketType,
+  MarketTypeString,
 } from "@/types/market";
 import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
@@ -42,6 +45,8 @@ import config from "../../config/markets.json";
 // import { simulateTx } from "@/actions/serverActions";
 import ContactEmail from "../shared/ContactEmail";
 import { fetchBalances } from "@/actions/serverActions";
+import { marketDetails } from "@/utils/MarketContractCaller";
+import { DateTimeConverter } from "@/utils/DateTimeConverter";
 
 const CONTRACT_ID = config.marketContracts[0];
 
@@ -93,11 +98,11 @@ const mockMarkets: Market[] = [
 ];
 
 const Portfolio = () => {
+  const [userMarkets, setUserMarkets] = useState<Market[]>([]);
   const [balances, setBalances] = useState<AssetBalanceType[]>([]);
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<ParsedSorobanError | null>(null);
-  // const { toast } = useToast();
   const [selectedType, setSelectedType] = useState<"ALL" | MarketType>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<"ALL" | MarketStatus>(
     "ALL"
@@ -147,7 +152,8 @@ const Portfolio = () => {
         if (isMounted) {
           if (publicKey) {
             const bal = await fetchBalances(publicKey);
-            setBalances(bal);
+            const displayBal = bal.slice(0, 10); // Display maximum 10 balances
+            setBalances(displayBal);
           }
         }
       } catch (error) {
@@ -180,38 +186,113 @@ const Portfolio = () => {
     }
   };
 
-  const getContractData = async (operationName: string) => {
-    if (!publicKey) {
-      console.error("Wallet not connected");
-      return;
-    }
+  useEffect(() => {
+    let isMounted = true;
 
-    if (!CONTRACT_ID) {
-      console.error("Contract ID missing");
-      return;
-    }
+    const fetchData = async () => {
+      try {
+        if (isMounted) {
+          setUserMarkets([]);
+          setLoading(true);
+          setError(null);
 
-    if (!operationName) {
-      console.error("Operation name missing");
-      return;
-    }
+          if (!publicKey) {
+            console.error("Wallet not connected");
+            return;
+          }
 
-    try {
-      setLoading(true);
-      setError(null);
+          if (config.marketContracts.length === 0) {
+            console.error("No market contracts found");
+            return;
+          }
 
-      // const result = await simulateTx(publicKey, CONTRACT_ID, operationName);
-      // console.log("TX", result);
-    } catch (error) {
-      console.log("Error loading data.", error);
-      alert("Error loading data. Please check the console for details.");
-      // set error
-    } finally {
-      setLoading(false);
-    }
-  };
+          console.time("Fetch Portfolio Timer");
 
-  const userMarkets = mockMarkets.filter((market) => market.yourShares > 0);
+          for (let i = 0; i < config.marketContracts.length; i++) {
+            const CONTRACT_ID = config.marketContracts[i];
+
+            const market: MarketDetailsType = (await marketDetails(
+              CONTRACT_ID,
+              publicKey
+            )) as MarketDetailsType;
+
+            if (market) {
+              if (market.hedge_address_shares > BigInt(0)) {
+                const marketHedgeSide: Market = {
+                  id: Math.random().toString(36),
+                  name: market.name,
+                  description: market.description,
+                  assetAddress: market.hedge_asset_address,
+                  assetSymbol: market.risk_asset_symbol,
+                  oracleAddress: market.oracle_address,
+                  oracleName: market.oracle_name,
+                  creatorAddress: market.hedge_admin_address,
+                  marketAddress: CONTRACT_ID,
+                  vaultAddress: market.hedge_address,
+                  status: market.status,
+                  possibleReturn: 0,
+                  totalAssets: market.hedge_total_assets,
+                  totalShares: market.hedge_total_shares,
+                  riskScore: market.risk_score,
+                  yourShares: market.hedge_address_shares,
+                  exercising: market.is_automatic ? "Automatic" : "Manual",
+                  eventTime: DateTimeConverter.convertUnixSecondsToDate(
+                    market.event_time
+                  ),
+                  commissionFee: market.commission_fee,
+                  type: MarketType.HEDGE,
+                };
+                setUserMarkets((prev) => [...prev, marketHedgeSide]);
+              }
+              if (market.risk_address_shares > BigInt(0)) {
+                const marketRiskSide: Market = {
+                  id: Math.random().toString(36),
+                  name: market.name,
+                  description: market.description,
+                  assetAddress: market.risk_asset_address,
+                  assetSymbol: market.risk_asset_symbol,
+                  oracleAddress: market.oracle_address,
+                  oracleName: market.oracle_name,
+                  creatorAddress: market.risk_admin_address,
+                  marketAddress: CONTRACT_ID,
+                  vaultAddress: market.risk_address,
+                  status: market.status,
+                  possibleReturn: 0,
+                  totalAssets: market.risk_total_assets,
+                  totalShares: market.risk_total_shares,
+                  riskScore: market.risk_score,
+                  yourShares: market.risk_address_shares,
+                  exercising: market.is_automatic ? "Automatic" : "Manual",
+                  eventTime: DateTimeConverter.convertUnixSecondsToDate(
+                    market.event_time
+                  ),
+                  commissionFee: market.commission_fee,
+                  type: MarketType.RISK,
+                };
+                setUserMarkets((prev) => [...prev, marketRiskSide]);
+              } else {
+                // No user shares - ignore this market
+              }
+            } else {
+              // No market found
+            }
+          }
+
+          console.timeEnd("Fetch Portfolio Timer");
+        }
+      } catch (error) {
+        console.log("Error loading data.", error);
+        // set error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (publicKey) fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, [publicKey]);
 
   const filteredMarkets = useMemo(() => {
     return userMarkets.filter((market) => {
@@ -222,11 +303,10 @@ const Portfolio = () => {
         selectedAsset === "ALL" || market.assetSymbol === selectedAsset;
       return typeMatch && statusMatch && assetMatch;
     });
-  }, [selectedType, selectedStatus, selectedAsset]);
+  }, [selectedType, selectedStatus, selectedAsset, userMarkets]);
 
   const sortedMarkets = useMemo(() => {
     if (!sortConfig) return filteredMarkets;
-
     return [...filteredMarkets].sort((a, b) => {
       if (a[sortConfig.key] < b[sortConfig.key]) {
         return sortConfig.direction === "asc" ? -1 : 1;
@@ -252,7 +332,6 @@ const Portfolio = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Background Ornaments */}
       <div className="absolute inset-0 bg-grid animate-grid-flow opacity-10" />
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
@@ -292,9 +371,17 @@ const Portfolio = () => {
                   <div className="space-y-2">
                     <Label>Filter by Side</Label>
                     <RadioGroup
-                      value={selectedType.toString()}
+                      value={
+                        selectedType === "ALL"
+                          ? selectedType
+                          : MarketType[selectedType]
+                      }
                       onValueChange={(value) =>
-                        setSelectedType(value as typeof selectedType)
+                        value === "ALL"
+                          ? setSelectedType(value)
+                          : setSelectedType(
+                              MarketType[value as MarketTypeString]
+                            )
                       }
                       className="flex gap-4"
                     >
@@ -316,9 +403,17 @@ const Portfolio = () => {
                   <div className="space-y-2">
                     <Label>Filter by Status</Label>
                     <Select
-                      value={selectedStatus.toString()}
+                      value={
+                        selectedStatus === "ALL"
+                          ? selectedStatus
+                          : MarketStatus[selectedStatus]
+                      }
                       onValueChange={(value) =>
-                        setSelectedStatus(value as typeof selectedStatus)
+                        value === "ALL"
+                          ? setSelectedStatus(value)
+                          : setSelectedStatus(
+                              MarketStatus[value as MarketStatusString]
+                            )
                       }
                     >
                       <SelectTrigger>
@@ -327,7 +422,9 @@ const Portfolio = () => {
                       <SelectContent>
                         <SelectItem value="ALL">All</SelectItem>
                         <SelectItem value="LIVE">Live</SelectItem>
+                        <SelectItem value="LIQUiDATE">Liquidate</SelectItem>
                         <SelectItem value="LIQUiDATED">Liquidated</SelectItem>
+                        <SelectItem value="MATURE">Mature</SelectItem>
                         <SelectItem value="MATURED">Matured</SelectItem>
                       </SelectContent>
                     </Select>
