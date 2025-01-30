@@ -243,6 +243,7 @@ const App = () => {
           let activeMarketsCount = 0;
           let maturedCount = 0;
           let liquodatedCount = 0;
+          let totalMarkets = 0;
           let totalValue = 0;
 
           for (let i = 0; i < config.marketContracts.length; i++) {
@@ -321,6 +322,8 @@ const App = () => {
                 liquodatedCount++;
               }
 
+              totalMarkets++;
+
               // non-usd assets first need to be priced and converted before adding them.
 
               if (market.hedge_asset_symbol === "USDC") {
@@ -361,9 +364,11 @@ const App = () => {
 
           setActiveMarkets(activeMarketsCount);
           setMaturedMarkets(maturedCount.toString());
-          setLiquidatedPercentage(
-            ((liquodatedCount / markets.length) * 100).toFixed(0)
-          );
+          if (totalMarkets > 0) {
+            setLiquidatedPercentage(
+              ((liquodatedCount / totalMarkets) * 100).toFixed(0)
+            );
+          }
           setTvl(totalValue);
 
           console.timeEnd("Fetch Markets Timer");
