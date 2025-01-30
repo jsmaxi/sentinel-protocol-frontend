@@ -35,6 +35,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import ContactEmail from "../shared/ContactEmail";
+import { subscribeEmailUsingNeonDB } from "@/utils/EmailSubscriber";
 
 const features = [
   {
@@ -153,14 +154,21 @@ const Landing = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      toast({
-        title: "Subscribe Simulation Worked",
-        description: "Currently for display purposes only.",
-      });
-      setEmail("");
+      const result = await subscribeEmailUsingNeonDB(email);
+      if (result) {
+        toast({
+          title: "Subscribe Email Worked",
+          description: "Thank you!",
+        });
+        setEmail("");
+      } else {
+        alert("Something went wrong. Please try again or contact the support.");
+      }
+    } else {
+      alert("Invalid email!");
     }
   };
 
@@ -177,7 +185,6 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Animated Background */}
       <div className="absolute inset-0 z-0">
         <div
           className={`absolute inset-0 ${
