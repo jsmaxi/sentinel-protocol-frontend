@@ -5,7 +5,6 @@ import {
   MarketStatus,
   Market,
   MarketType,
-  PriceAsset,
 } from "@/types/market";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,10 +12,7 @@ import { Shield, DollarSign, Users, Calendar } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import {
-  fetchAssetPrice,
-  fetchAssetPriceByCodes,
-} from "@/actions/serverActions";
+import { fetchAssetPriceByCodes } from "@/actions/serverActions";
 
 interface MarketCardProps {
   market: Market;

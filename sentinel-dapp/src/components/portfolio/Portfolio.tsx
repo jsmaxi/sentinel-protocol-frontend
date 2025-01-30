@@ -102,7 +102,7 @@ const Portfolio = () => {
   const [balances, setBalances] = useState<AssetBalanceType[]>([]);
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<ParsedSorobanError | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<"ALL" | MarketType>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<"ALL" | MarketStatus>(
     "ALL"
@@ -157,7 +157,8 @@ const Portfolio = () => {
           }
         }
       } catch (error) {
-        console.error(error);
+        console.log("Error loading balances.", error);
+        setError("Error occurred while fetching wallet balances.");
       }
     };
     if (publicKey) fetchData();
@@ -197,12 +198,12 @@ const Portfolio = () => {
           setError(null);
 
           if (!publicKey) {
-            console.error("Wallet not connected");
+            console.log("Wallet not connected");
             return;
           }
 
           if (config.marketContracts.length === 0) {
-            console.error("No market contracts found");
+            console.log("No market contracts found");
             return;
           }
 
@@ -282,7 +283,9 @@ const Portfolio = () => {
         }
       } catch (error) {
         console.log("Error loading data.", error);
-        // set error
+        setError(
+          "Something went wrong. Please try again or contact the support."
+        );
       } finally {
         setLoading(false);
       }
@@ -566,6 +569,8 @@ const Portfolio = () => {
                   )}
                 </div>
               </div>
+
+              {error && <p className="text-red-700">{error}</p>}
             </>
           )
         ) : (

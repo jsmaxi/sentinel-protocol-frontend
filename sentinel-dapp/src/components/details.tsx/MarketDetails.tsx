@@ -148,6 +148,8 @@ export default function MarketDetails() {
 
             if (!market) {
               // not found
+              setError("Market not found");
+              return;
             }
 
             const isHedge = SIDE === "HEDGE";
@@ -200,7 +202,7 @@ export default function MarketDetails() {
           }
         }
       } catch (error) {
-        console.error(error);
+        console.log(error);
         setError(
           "Something went wrong. Please try again or contact the support."
         );
@@ -246,13 +248,13 @@ export default function MarketDetails() {
 
   const handleConfirm = async () => {
     if (!publicKey) {
-      console.error("Wallet not connected");
+      console.log("Wallet not connected");
       setError("Wallet not connected");
       return;
     }
 
     if (!CONTRACT_ID) {
-      console.error("Contract ID missing");
+      console.log("Contract ID missing");
       setError("Contract ID not found");
       return;
     }
@@ -260,13 +262,13 @@ export default function MarketDetails() {
     const operationName = selectedAction;
 
     if (!operationName) {
-      console.error("Operation name missing");
+      console.log("Operation name missing");
       setError("Invalid operation");
       return;
     }
 
     if (!market?.vaultAddress) {
-      console.error("Vault address missing");
+      console.log("Vault address missing");
       setError("Vault address not found");
       return;
     }
@@ -353,7 +355,7 @@ export default function MarketDetails() {
       setAmount("");
       setRefetchMarket(!refetchMarket);
     } catch (e) {
-      console.error(e);
+      console.log(e);
       setError(
         "Something went wrong. Please try again or contact the support."
       );

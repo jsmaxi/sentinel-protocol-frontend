@@ -158,7 +158,7 @@ export class SorobanErrorParser {
 
       return events;
     } catch (error) {
-      console.error("Error parsing host events:", error);
+      console.log("Error parsing host events:", error);
       return [];
     }
   };

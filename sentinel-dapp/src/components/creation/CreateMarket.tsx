@@ -50,6 +50,7 @@ const CreateMarket = () => {
     },
   });
   const [publicKey, setPublicKey] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkFreighter = async () => {
@@ -94,34 +95,44 @@ const CreateMarket = () => {
   };
 
   const onSubmit = async (data: CreateMarketFormData) => {
-    const emptyFields = Object.entries(data).filter(
-      ([key, value]) => typeof value !== "number" && !value
-    );
+    try {
+      setError("");
 
-    if (emptyFields.length > 0) {
+      const emptyFields = Object.entries(data).filter(
+        ([key, value]) => typeof value !== "number" && !value
+      );
+
+      if (emptyFields.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description:
+            "All fields are required. Please fill in all the fields.",
+        });
+        return;
+      }
+
+      if (data.eventDate < new Date()) {
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description: "Event date must not be in the past.",
+        });
+        return;
+      }
+
+      console.log("Form submitted:", data);
       toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "All fields are required. Please fill in all the fields.",
+        title: "Market Creation Simulated",
+        description: "Your market creation has been simulated successfully.",
       });
-      return;
+      router.push("/markets");
+    } catch (e) {
+      console.log("Error", e);
+      setError(
+        "Something went wrong. Please try again or contact the support."
+      );
     }
-
-    if (data.eventDate < new Date()) {
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Event date must not be in the past.",
-      });
-      return;
-    }
-
-    console.log("Form submitted:", data);
-    toast({
-      title: "Market Creation Simulated",
-      description: "Your market creation has been simulated successfully.",
-    });
-    router.push("/markets");
   };
 
   return (
@@ -473,6 +484,8 @@ const CreateMarket = () => {
                 <Button type="submit" className="w-full">
                   Create Market
                 </Button>
+
+                {error && <p className="text-red-700">{error}</p>}
               </form>
             </Form>
           ) : (

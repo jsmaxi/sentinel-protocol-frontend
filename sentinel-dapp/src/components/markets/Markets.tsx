@@ -51,7 +51,6 @@ import {
 } from "@/types/market";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
-import { ParsedSorobanError } from "../../utils/SorobanErrorParser";
 import Processing from "../shared/Processing";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
@@ -165,7 +164,7 @@ const App = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<ParsedSorobanError | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [markets, setMarkets] = useState<Market[]>([]);
   const [activeMarkets, setActiveMarkets] = useState<number>(0);
   const [tvl, setTvl] = useState<number>(0);
@@ -229,12 +228,14 @@ const App = () => {
           setError(null);
 
           if (!publicKey) {
-            console.error("Wallet not connected");
+            console.log("Wallet not connected");
+            setError("Wallet not connected");
             return;
           }
 
           if (config.marketContracts.length === 0) {
-            console.error("No market contracts found");
+            console.log("No market contracts found");
+            setError("Market contract not found");
             return;
           }
 
@@ -253,7 +254,6 @@ const App = () => {
               CONTRACT_ID,
               publicKey
             )) as MarketDetailsType;
-            console.log("Market", market);
 
             if (market) {
               const marketHedgeSide: Market = {
@@ -375,7 +375,9 @@ const App = () => {
         }
       } catch (error) {
         console.log("Error loading data.", error);
-        // set error
+        setError(
+          "Something went wrong. Please try again or contact the support."
+        );
       } finally {
         setLoading(false);
       }
@@ -794,6 +796,8 @@ const App = () => {
                     ))}
                   </div>
                 </div>
+
+                {error && <p className="text-red-700">{error}</p>}
               </>
             )
           ) : (
