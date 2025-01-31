@@ -273,6 +273,15 @@ export default function MarketDetails() {
       return;
     }
 
+    if (
+      !ownerAddress &&
+      (selectedAction === "redeem" || selectedAction === "withdraw")
+    ) {
+      console.log("Owner address missing");
+      setError("Missing owner address");
+      return;
+    }
+
     console.log(
       "Confirming action:",
       selectedAction,
@@ -320,7 +329,7 @@ export default function MarketDetails() {
             market.vaultAddress,
             publicKey,
             publicKey,
-            publicKey,
+            ownerAddress,
             BigInt(amount)
           );
           if (withdrawn) {
@@ -335,7 +344,7 @@ export default function MarketDetails() {
             market.vaultAddress,
             publicKey,
             publicKey,
-            publicKey,
+            ownerAddress,
             BigInt(amount)
           );
           if (redeemed) {
@@ -444,7 +453,7 @@ export default function MarketDetails() {
             <>
               <div className="text-sm">
                 <span className="text-muted-foreground">
-                  Preview estimated return:
+                  Preview estimated amount:
                 </span>
                 <span className="ml-2">{calculateReturn()}</span>
               </div>
