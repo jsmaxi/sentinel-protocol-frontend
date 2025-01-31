@@ -152,7 +152,10 @@ const App = () => {
   const [marketType, setMarketType] = useState<MarketType>(MarketType.HEDGE);
   const [searchQuery, setSearchQuery] = useState("");
   const [savedMarkets, setSavedMarkets] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<"date" | "risk" | "return">("date");
+  const [sortBy, setSortBy] = useState<"none" | "date" | "risk" | "return">(
+    "none"
+  );
+  const [ascending, setAscending] = useState<boolean>(false);
   const [statusFilter, setStatusFilter] = useState<Market["status"] | "ALL">(
     "ALL"
   );
@@ -424,12 +427,21 @@ const App = () => {
       });
   };
 
+  function handleSort(sort: "none" | "date" | "risk" | "return") {
+    if (sortBy === sort) setAscending(!ascending);
+    else {
+      setAscending(true);
+      setSortBy(sort);
+    }
+  }
+
   const filteredMarkets = markets
     .filter((market) => market.type === marketType)
     .filter(
       (market) =>
         market.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        market.description.toLowerCase().includes(searchQuery.toLowerCase())
+        market.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        market.oracleName.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .filter((market) =>
       statusFilter === "ALL" ? true : market.status === statusFilter
@@ -443,12 +455,14 @@ const App = () => {
     .sort((a, b) => {
       switch (sortBy) {
         case "date":
+          if (ascending) return a.eventTime.getTime() - b.eventTime.getTime();
           return b.eventTime.getTime() - a.eventTime.getTime();
         case "risk":
-          // const riskOrder = { LOW: 0, MEDIUM: 1, HIGH: 2, UNKNOWN: 3 };
-          return a.riskScore - b.riskScore;
+          if (ascending) return a.riskScore - b.riskScore;
+          return b.riskScore - a.riskScore;
         case "return":
-          return b.possibleReturn - a.possibleReturn;
+          if (ascending) return b.possibleReturn - a.possibleReturn;
+          return a.possibleReturn - b.possibleReturn;
         default:
           return 0;
       }
@@ -643,14 +657,17 @@ const App = () => {
                       <DropdownMenuContent>
                         <DropdownMenuLabel>Sort by</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setSortBy("date")}>
-                          Date
+                        <DropdownMenuItem onClick={() => handleSort("none")}>
+                          {sortBy === "none" && "✓"} None
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setSortBy("risk")}>
-                          Risk Level
+                        <DropdownMenuItem onClick={() => handleSort("date")}>
+                          {sortBy === "date" && "✓"} Date
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setSortBy("return")}>
-                          Possible Return
+                        <DropdownMenuItem onClick={() => handleSort("risk")}>
+                          {sortBy === "risk" && "✓"} Risk Level
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSort("return")}>
+                          {sortBy === "return" && "✓"} Possible Return
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -667,54 +684,71 @@ const App = () => {
                         <DropdownMenuItem
                           onClick={() => setStatusFilter("ALL")}
                         >
-                          All
+                          {statusFilter === "ALL" && "✓"} All
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => setStatusFilter(MarketStatus.LIVE)}
                         >
-                          Live
+                          {statusFilter === MarketStatus.LIVE && "✓"} Live
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() =>
-                            setStatusFilter(MarketStatus.LIQUIDATED)
+                            setStatusFilter(
+                              MarketStatus.LIQUIDATED | MarketStatus.LIQUIDATE
+                            )
                           }
                         >
+                          {statusFilter ===
+                            (MarketStatus.LIQUIDATED |
+                              MarketStatus.LIQUIDATE) && "✓"}{" "}
                           Liquidated
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => setStatusFilter(MarketStatus.MATURED)}
+                          onClick={() =>
+                            setStatusFilter(
+                              MarketStatus.MATURED | MarketStatus.MATURE
+                            )
+                          }
                         >
+                          {statusFilter ===
+                            (MarketStatus.MATURED | MarketStatus.MATURE) &&
+                            "✓"}{" "}
                           Matured
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel>Risk Level</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => setRiskFilter("ALL")}>
-                          All
+                          {riskFilter === "ALL" && "✓"} All
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => setRiskFilter(MarketRiskScore.LOW)}
                         >
-                          Low
+                          {riskFilter === MarketRiskScore.LOW && "✓"} Low
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => setRiskFilter(MarketRiskScore.MEDIUM)}
                         >
-                          Medium
+                          {riskFilter === MarketRiskScore.MEDIUM && "✓"} Medium
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => setRiskFilter(MarketRiskScore.HIGH)}
                         >
-                          High
+                          {riskFilter === MarketRiskScore.HIGH && "✓"} High
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel>Asset</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => setAssetFilter("ALL")}>
-                          All
+                          {assetFilter === "ALL" && "✓"} All
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setAssetFilter("native")}
+                        >
+                          {assetFilter === "native" && "✓"} XLM
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => setAssetFilter("USDC")}
                         >
-                          USDC
+                          {assetFilter === "USDC" && "✓"} USDC
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
