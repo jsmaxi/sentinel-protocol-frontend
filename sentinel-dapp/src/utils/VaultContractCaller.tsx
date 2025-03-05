@@ -134,14 +134,17 @@ export async function approveAssets(
   approveAmount: bigint,
   expirationLedger: number
 ): Promise<boolean> {
-  // decimals needed ?
+  const dcm = await simulateGetAction(assetAddress, "decimals", caller);
+  if (typeof dcm !== "number" || dcm < 0)
+    throw "Unable to retrieve asset decimals";
+  const pow = BigInt(Math.pow(10, dcm));
   const prep = await prepareApproveAssets(
     assetAddress,
     "approve",
     caller,
     owner,
     spender,
-    approveAmount,
+    approveAmount * pow,
     expirationLedger
   );
   const sgn = await signTx(prep);

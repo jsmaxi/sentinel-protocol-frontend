@@ -1,11 +1,29 @@
 ## Sentinel Decentralized Application
 
+## Quick Start:
+
 ```
-npx create-next-app@latest sentinel-dapp
-
 cd sentinel-dapp
-
+npm install
 npm run dev
 ```
 
-https://localhost:3000/
+Open: https://localhost:3000/
+
+### Scaffold:
+
+```
+npx create-next-app@latest sentinel-dapp
+cd sentinel-dapp
+npm run dev
+```
+
+Frontend Technologies:
+
+- NextJs
+
+- TailwindCss
+
+- @stellar/freighter-api
+
+- @stellar/stellar-sdk
