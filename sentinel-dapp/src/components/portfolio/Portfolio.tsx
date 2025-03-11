@@ -14,7 +14,6 @@ import {
   AssetBalanceType,
   Market,
   MarketDetailsType,
-  MarketRiskScore,
   MarketStatus,
   MarketStatusString,
   MarketType,
@@ -31,71 +30,65 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState, useMemo, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { isConnected, setAllowed, getAddress } from "@stellar/freighter-api";
-import {
-  ParsedSorobanError,
-  SorobanErrorParser,
-} from "../../utils/SorobanErrorParser";
 import Processing from "../shared/Processing";
 import ConnectWallet from "../shared/ConnectWallet";
 import NetworkInfo from "../shared/NetworkInfo";
 import config from "../../config/markets.json";
-// import { simulateTx } from "@/actions/serverActions";
 import ContactEmail from "../shared/ContactEmail";
 import { fetchBalances } from "@/actions/serverActions";
 import { marketDetails } from "@/utils/MarketContractCaller";
 import { DateTimeConverter } from "@/utils/DateTimeConverter";
 
-const CONTRACT_ID = config.marketContracts[0];
+// const CONTRACT_ID = config.marketContracts[0];
 
-const mockMarkets: Market[] = [
-  {
-    id: "1",
-    name: "Flight Delay Insurance",
-    description: "Insurance against flight delays for major airlines",
-    assetSymbol: "USDC",
-    assetAddress: "GBBD47385729XJKD",
-    oracleName: "FlightAPI",
-    oracleAddress: "GBBD47385729XJKD",
-    creatorAddress: "GBBD47385729XJKD",
-    marketAddress: "GBBD47385729XJKD",
-    vaultAddress: "GBBD47385729XJKE",
-    status: MarketStatus.LIVE,
-    possibleReturn: 12.5,
-    totalAssets: BigInt(100000),
-    totalShares: BigInt(1000),
-    riskScore: MarketRiskScore.LOW,
-    yourShares: BigInt(10),
-    exercising: "AUTO" as const,
-    eventTime: new Date(),
-    commissionFee: 10,
-    type: MarketType.HEDGE,
-  },
-  {
-    id: "2",
-    name: "Weather Insurance",
-    description: "Insurance against bad weather",
-    assetSymbol: "USDT",
-    assetAddress: "GBBD47385729XJKD",
-    oracleName: "WeatherAPI",
-    oracleAddress: "GBBD47385729XJKD",
-    creatorAddress: "GBBD47385729XJKE",
-    marketAddress: "GBBD47385729XJKD",
-    vaultAddress: "GBBD47385729XJKF",
-    status: MarketStatus.LIQUIDATED,
-    possibleReturn: 15.0,
-    totalAssets: BigInt(200000),
-    totalShares: BigInt(2000),
-    riskScore: MarketRiskScore.MEDIUM,
-    yourShares: BigInt(20),
-    exercising: "MANUAL" as const,
-    eventTime: new Date(),
-    commissionFee: 5,
-    type: MarketType.RISK,
-  },
-];
+// const mockMarkets: Market[] = [
+//   {
+//     id: "1",
+//     name: "Flight Delay Insurance",
+//     description: "Insurance against flight delays for major airlines",
+//     assetSymbol: "USDC",
+//     assetAddress: "GBBD47385729XJKD",
+//     oracleName: "FlightAPI",
+//     oracleAddress: "GBBD47385729XJKD",
+//     creatorAddress: "GBBD47385729XJKD",
+//     marketAddress: "GBBD47385729XJKD",
+//     vaultAddress: "GBBD47385729XJKE",
+//     status: MarketStatus.LIVE,
+//     possibleReturn: 12.5,
+//     totalAssets: BigInt(100000),
+//     totalShares: BigInt(1000),
+//     riskScore: MarketRiskScore.LOW,
+//     yourShares: BigInt(10),
+//     exercising: "AUTO" as const,
+//     eventTime: new Date(),
+//     commissionFee: 10,
+//     type: MarketType.HEDGE,
+//   },
+//   {
+//     id: "2",
+//     name: "Weather Insurance",
+//     description: "Insurance against bad weather",
+//     assetSymbol: "USDT",
+//     assetAddress: "GBBD47385729XJKD",
+//     oracleName: "WeatherAPI",
+//     oracleAddress: "GBBD47385729XJKD",
+//     creatorAddress: "GBBD47385729XJKE",
+//     marketAddress: "GBBD47385729XJKD",
+//     vaultAddress: "GBBD47385729XJKF",
+//     status: MarketStatus.LIQUIDATED,
+//     possibleReturn: 15.0,
+//     totalAssets: BigInt(200000),
+//     totalShares: BigInt(2000),
+//     riskScore: MarketRiskScore.MEDIUM,
+//     yourShares: BigInt(20),
+//     exercising: "MANUAL" as const,
+//     eventTime: new Date(),
+//     commissionFee: 5,
+//     type: MarketType.RISK,
+//   },
+// ];
 
 const Portfolio = () => {
   const [userMarkets, setUserMarkets] = useState<Market[]>([]);
@@ -231,7 +224,7 @@ const Portfolio = () => {
                   marketAddress: CONTRACT_ID,
                   vaultAddress: market.hedge_address,
                   status: market.status,
-                  possibleReturn: 0,
+                  possibleReturn: 150,
                   totalAssets: market.hedge_total_assets,
                   totalShares: market.hedge_total_shares,
                   riskScore: market.risk_score,
@@ -258,7 +251,7 @@ const Portfolio = () => {
                   marketAddress: CONTRACT_ID,
                   vaultAddress: market.risk_address,
                   status: market.status,
-                  possibleReturn: 0,
+                  possibleReturn: 150,
                   totalAssets: market.risk_total_assets,
                   totalShares: market.risk_total_shares,
                   riskScore: market.risk_score,

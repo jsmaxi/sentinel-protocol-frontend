@@ -2,13 +2,12 @@
     "sorobanRpcUrl": "https://soroban-testnet.stellar.org:443",
     "horizonRpcUrl": "https://horizon-testnet.stellar.org",
     "accountExplorer": "https://stellar.expert/explorer/testnet/account/",
+    "assetExplorer": "https://stellar.expert/explorer/testnet/asset/",
     "defaultTimeoutSeconds": 30,
     "defaultTransactionPollSeconds": 1000,
     "isTestnet": true,
     "marketContracts": [
-      "CBL4YUZOT32MBSYM4G3RT6QM3YJVRAILCHYGRHYM56VK56OK2SRQGAFK",
-      "CDBJRGGN35AZSDVVTAVSUGGC4AD7TE6X7S4PUTBMSIGWEL2PGLM4BKZ3",
-      "CCQIOKKMJHY25D6XXGQXNJCNHTTAF7Z7COBYPRUKSDE534ASQVJZI4PT"
+      "CCA2QS3FF3WDKKQOKX5STIGAVMXIPPRT4L5AXT2HEUWUZYGLRZDQSQSM"
     ],
     "assetIssuers": [
       {"code": "USDC", "issuer" : "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5"}

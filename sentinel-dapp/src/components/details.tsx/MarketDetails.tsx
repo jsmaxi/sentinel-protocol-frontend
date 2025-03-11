@@ -67,6 +67,7 @@ import config from "../../config/markets.json";
 type ActionType = "deposit" | "withdraw" | "mint" | "redeem" | null;
 
 const explorer = config.accountExplorer;
+const assetExplorer = config.assetExplorer;
 
 export default function MarketDetails() {
   const searchParams = useSearchParams();
@@ -172,7 +173,7 @@ export default function MarketDetails() {
                 ? market.hedge_address
                 : market.risk_address,
               status: market.status,
-              possibleReturn: 0,
+              possibleReturn: 150,
               totalAssets: isHedge
                 ? market.hedge_total_assets
                 : market.risk_total_assets,
@@ -640,7 +641,7 @@ export default function MarketDetails() {
                       <span className="text-md font-semibold hover:text-primary hover:underline">
                         {market && (
                           <Link
-                            href={explorer + market.assetAddress}
+                            href={assetExplorer + market.assetAddress}
                             target="_blank"
                           >
                             {market.assetAddress.slice(0, 4)}...
