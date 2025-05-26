@@ -510,7 +510,7 @@ const App = () => {
                 Create
               </Link>
               <a
-                href="https://github.com/SentinelFi/SentinelFi"
+                href="https://github.com/SentinelFi"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm hover:text-primary transition-colors"
@@ -843,7 +843,7 @@ const App = () => {
           <Separator className="my-8" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Link
-              href="https://github.com/SentinelFi/SentinelFi"
+              href="https://github.com/SentinelFi"
               target="_blank"
               className="group flex flex-col items-start space-y-2 p-4 rounded-lg hover:bg-secondary/50 transition-colors"
             >
@@ -869,7 +869,7 @@ const App = () => {
             </Link>
 
             <Link
-              href="https://github.com/SentinelFi/SentinelFi"
+              href="https://github.com/SentinelFi"
               target="_blank"
               className="group flex flex-col items-start space-y-2 p-4 rounded-lg hover:bg-secondary/50 transition-colors"
             >
